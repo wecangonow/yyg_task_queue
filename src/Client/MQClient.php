@@ -40,7 +40,7 @@ class MqClient
     public function __construct(array $config = array())
     {
 
-        $this->client = new \swoole_client(SWOOLE_SOCK_TCP);
+        $this->client = new \swoole_client(SWOOLE_SOCK_TCP, SWOOLE_SOCK_ASYNC);
         $this->client->set(
             [
                 'open_length_check' => true,
@@ -50,6 +50,14 @@ class MqClient
         if (! $this->client->connect($config['ip'], $config['port'], 30)) {
             throw new \Exception("connect failed. error: {$this->client->errCode}\n");
         }
+
+        $this->client->on("connect", function($cli){
+            echo "I connected the server\n";
+        });
+
+        $this->client->on("receive", function($cli, $data){
+            echo "Data from server: $data\n";
+        });
     }
     /**
      * 设置队列

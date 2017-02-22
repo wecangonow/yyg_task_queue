@@ -20,12 +20,12 @@
         "monolog/monolog": "^1.21",
         "guzzlehttp/guzzle": "^6.2",
         "symfony/config": "^3.1",
-        "chrisboulton/php-resque": "1.2.x",
         "oasis/config": "^1.0",
         "symfony/yaml": "^3.1",
         "oasis/logging": "^1.1",
         "simplon/mysql": "^1.3",
-        "matyhtf/swoole_framework": "^1.13",
-        "oasis/utils": "^1.6"
+        "oasis/utils": "^1.6",
+        "workerman/workerman": "^3.3",
+        "react/zmq": "^0.3.0"
     }
 }

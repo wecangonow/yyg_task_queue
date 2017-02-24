@@ -11,7 +11,7 @@ class ServerConfiguration extends AbstractYamlConfiguration
     public $timezone;
     public $queues;
     public $log_path;
-    public $swoole_server_info;
+    public $email;
     public $redis_server_info;
 
     public function load()
@@ -20,7 +20,7 @@ class ServerConfiguration extends AbstractYamlConfiguration
             "config.yml",
             [
                 PROJECT_DIR . "/config",
-                "../../"
+                "../../",
             ]
         );
     }
@@ -37,31 +37,40 @@ class ServerConfiguration extends AbstractYamlConfiguration
 
             $services = $rootNode->children()->arrayNode("services");
             {
-                $swoole_server = $services->children()->arrayNode("swoole_server");
-                {
-                    $swoole_server->children()->scalarNode("ip");
-                    $swoole_server->children()->integerNode("port");
-                    $swoole_server->children()->scalarNode("pack_type");
-                    $swoole_server->children()->scalarNode("mode");
-                    $set = $swoole_server->children()->arrayNode("set");
-                    {
-                        $set->children()->scalarNode("user");
-                        $set->children()->scalarNode("group");
-                        $set->children()->integerNode("worker_num");
-                        $set->children()->integerNode("task_worker_num");
-                        $set->children()->integerNode("dispatch_mode");
-                        $set->children()->booleanNode("open_cpu_affinity")->defaultTrue();
-                        $set->children()->booleanNode("open_tcp_nodelay")->defaultTrue();
-                        $set->children()->scalarNode("package_max_length");
-                        $set->children()->booleanNode("daemonize")->defaultTrue();
-                        $set->children()->scalarNode("log_file")->defaultFalse(PROJECT_DIR . "/logs/swoole_server.log");
-                    }
-                }
 
                 $redis_server = $services->children()->arrayNode("redis");
                 {
                     $redis_server->children()->scalarNode("host");
                     $redis_server->children()->scalarNode("port");
+                }
+                $email = $services->children()->arrayNode("email");
+                {
+                    $email->children()->scalarNode("host");
+                    $email->children()->scalarNode("port");
+                    $email->children()->scalarNode("username");
+                    $email->children()->scalarNode("password");
+                    $email->children()->booleanNode("auth");
+                }
+                $info = $email->children()->arrayNode("info");
+                {
+                    $malaysia_info = $info->children()->arrayNode("malaysia");
+                    {
+                        $malaysia_info->children()->scalarNode("sender");
+                        $malaysia_info->children()->scalarNode("receiver");
+                        $malaysia_info->children()->scalarNode("title");
+                    }
+                    $turkey_info = $info->children()->arrayNode("turkey");
+                    {
+                        $turkey_info->children()->scalarNode("sender");
+                        $turkey_info->children()->scalarNode("receiver");
+                        $turkey_info->children()->scalarNode("title");
+                    }
+                    $russia_info = $info->children()->arrayNode("russia");
+                    {
+                        $russia_info->children()->scalarNode("sender");
+                        $russia_info->children()->scalarNode("receiver");
+                        $russia_info->children()->scalarNode("title");
+                    }
                 }
             }
         }
@@ -72,12 +81,12 @@ class ServerConfiguration extends AbstractYamlConfiguration
 
     public function assignProcessedConfig()
     {
-        $this->is_debug           = $this->processedConfig["is_debug"];
-        $this->log_path           = $this->processedConfig["log_path"];
-        $this->timezone           = $this->processedConfig["timezone"];
-        $this->queues             = $this->processedConfig["queues"];
-        $this->swoole_server_info = $this->processedConfig["services"]["swoole_server"];
-        $this->redis_server_info  = $this->processedConfig["services"]["redis_server"];
+        $this->is_debug          = $this->processedConfig["is_debug"];
+        $this->log_path          = $this->processedConfig["log_path"];
+        $this->email             = $this->processedConfig["email"];
+        $this->timezone          = $this->processedConfig["timezone"];
+        $this->queues            = $this->processedConfig["queues"];
+        $this->redis_server_info = $this->processedConfig["services"]["redis_server"];
 
     }
 

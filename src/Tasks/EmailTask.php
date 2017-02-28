@@ -6,15 +6,18 @@
  * Time: 下午4:11
  */
 
-namespace Yyg\Core;
-require PROJECT_DIR . '/vendor/phpmailer/phpmailer/PHPMailerAutoload.php';
+namespace Yyg\Tasks;
+require_once PROJECT_DIR . '/vendor/phpmailer/phpmailer/PHPMailerAutoload.php';
 use Yyg\Configuration\ServerConfiguration;
+use Clue\React\Redis\Client;
 
 class EmailTask implements   TaskInterface
 {
-    public static function execute(array $task)
+    public static function execute(array $task, Client $res_client)
     {
         $ses_info = ServerConfiguration::instance()->email;
+
+        $country = $task['argv']['country'];
         $mail = new \PHPMailer();
 
         $mail->isSMTP();
@@ -24,10 +27,11 @@ class EmailTask implements   TaskInterface
         $mail->SMTPAuth = $ses_info['auth'];
         $mail->Username = $ses_info['username'];
         $mail->Password = $ses_info['password'];
-        $mail->setFrom($ses_info['sender'], $ses_info['sender_info']);
-        $mail->addReplyTo($ses_info['receiver']);
+        //$mail->SMTPDebug = 2;
+        $mail->setFrom($ses_info['info'][$country]['sender'], $task['argv']['sender_info']);
+        $mail->addReplyTo($ses_info['info'][$country]['receiver']);
         $mail->CharSet = 'UTF-8';
-        $mail->IsHTML(true);
+        $mail->IsHTML($task['argv']['is_html']);
         $mail->Subject = $task['argv']['subject'];
         $mail->Body    = $task['argv']['body'];
         $emails = $task['argv']['email_address'];
@@ -41,7 +45,7 @@ class EmailTask implements   TaskInterface
             merror("Mailer Error: %s " , $mail->ErrorInfo);
         }
         else {
-            minfo("Message sent successfully to %s " , implode("|",$emails));
+            minfo("Task type %s  successfully to %s " , $task['type'], implode("|",$emails));
         }
 
     }

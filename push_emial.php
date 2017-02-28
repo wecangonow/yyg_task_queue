@@ -5,21 +5,21 @@
 
 require_once __DIR__ . '/bootstrap.php';
 
+require_once "email.tpl.php";
+
 use Yyg\Configuration\ServerConfiguration;
 use Oasis\Mlib\Logging\LocalFileHandler;
 
 (new LocalFileHandler(ServerConfiguration::instance()->log_path))->install();
 
+
 global $argv;
 
-if (!isset($argv[1]) || !isset($argv[2]) || !isset($argv[3]) || !isset($argv[4])) {
-    exit("Usage: php push.php emails_list email_tpl email_subject country\n");
+if (!isset($argv[1])) {
+    exit("Usage: php push.php emails_list \n");
 }
 
 $emails_file = $argv['1'];
-$email_tpl   = $argv['2'];
-$email_title = $argv['3'];
-$country     = $argv['4'];
 
 $handle = fopen($emails_file, "r") or die("Couldn't get handle");
 
@@ -31,8 +31,11 @@ if ($handle) {
     $email_counter                     = 0;
     $email_task                        = [];
     $email_task['type']                = "email";
-    $email_task['argv']['body']   = file_get_contents($email_tpl);
-    $email_task['argv']['subject'] = $email_title;
+    $email_task['argv']['body']        = $email_tpl['body'];
+    $email_task['argv']['country']     = $email_tpl['country'];
+    $email_task['argv']['is_html']     = $email_tpl['is_html'];
+    $email_task['argv']['subject']     = $email_tpl['subject'];
+    $email_task['argv']['sender_info'] = $email_tpl['sender_info'];
 
     while (!feof($handle)) {
 

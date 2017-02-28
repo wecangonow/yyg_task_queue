@@ -26,6 +26,7 @@
         "oasis/utils": "^1.6",
         "workerman/workerman": "^3.3",
         "clue/redis-react": "^1.0",
-        "phpmailer/phpmailer": "~5.2"
+        "phpmailer/phpmailer": "~5.2",
+        "guzzlehttp/guzzle": "^6.2"
     }
 }

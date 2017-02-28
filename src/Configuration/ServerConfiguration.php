@@ -43,33 +43,35 @@ class ServerConfiguration extends AbstractYamlConfiguration
                     $redis_server->children()->scalarNode("host");
                     $redis_server->children()->scalarNode("port");
                 }
+
                 $email = $services->children()->arrayNode("email");
                 {
                     $email->children()->scalarNode("host");
-                    $email->children()->scalarNode("port");
+                    $email->children()->integerNode("port");
                     $email->children()->scalarNode("username");
                     $email->children()->scalarNode("password");
                     $email->children()->booleanNode("auth");
-                }
-                $info = $email->children()->arrayNode("info");
-                {
-                    $malaysia_info = $info->children()->arrayNode("malaysia");
+
+                    $info = $email->children()->arrayNode("info");
                     {
-                        $malaysia_info->children()->scalarNode("sender");
-                        $malaysia_info->children()->scalarNode("receiver");
-                        $malaysia_info->children()->scalarNode("title");
-                    }
-                    $turkey_info = $info->children()->arrayNode("turkey");
-                    {
-                        $turkey_info->children()->scalarNode("sender");
-                        $turkey_info->children()->scalarNode("receiver");
-                        $turkey_info->children()->scalarNode("title");
-                    }
-                    $russia_info = $info->children()->arrayNode("russia");
-                    {
-                        $russia_info->children()->scalarNode("sender");
-                        $russia_info->children()->scalarNode("receiver");
-                        $russia_info->children()->scalarNode("title");
+                        $malaysia_info = $info->children()->arrayNode("malaysia");
+                        {
+                            $malaysia_info->children()->scalarNode("sender");
+                            $malaysia_info->children()->scalarNode("receiver");
+                            $malaysia_info->children()->scalarNode("title");
+                        }
+                        $turkey_info = $info->children()->arrayNode("turkey");
+                        {
+                            $turkey_info->children()->scalarNode("sender");
+                            $turkey_info->children()->scalarNode("receiver");
+                            $turkey_info->children()->scalarNode("title");
+                        }
+                        $russia_info = $info->children()->arrayNode("russia");
+                        {
+                            $russia_info->children()->scalarNode("sender");
+                            $russia_info->children()->scalarNode("receiver");
+                            $russia_info->children()->scalarNode("title");
+                        }
                     }
                 }
             }
@@ -83,7 +85,7 @@ class ServerConfiguration extends AbstractYamlConfiguration
     {
         $this->is_debug          = $this->processedConfig["is_debug"];
         $this->log_path          = $this->processedConfig["log_path"];
-        $this->email             = $this->processedConfig["email"];
+        $this->email             = $this->processedConfig['services']["email"];
         $this->timezone          = $this->processedConfig["timezone"];
         $this->queues            = $this->processedConfig["queues"];
         $this->redis_server_info = $this->processedConfig["services"]["redis_server"];

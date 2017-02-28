@@ -15,6 +15,9 @@ class Response
             case "email":
                 $ret = self::emailResponse();
                 break;
+            case "download":
+                $ret = self::downloadResponse();
+                break;
         }
 
         return $ret;
@@ -27,4 +30,9 @@ class Response
         return $msg;
     }
     
+    public static function downloadResponse()
+    {
+        $msg =  "server get an download url  to queue";
+        return $msg;
+    }
 }

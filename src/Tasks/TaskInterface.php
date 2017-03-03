@@ -8,8 +8,7 @@
 
 namespace Yyg\Tasks;
 
-use Clue\React\Redis\Client;
 interface TaskInterface
 {
-    public static function execute(array $task, Client $res_client);
+    public static function execute(array $task);
 }

@@ -8,54 +8,68 @@
 
 namespace Yyg\Tasks;
 
-use Clue\React\Redis\Client;
-
 class DownloadTask implements TaskInterface
 {
 
-    public static function execute(array $task, Client $res_client)
+    public static function execute(array $task)
     {
-        $url = $task['argv']['url'];
+        $url       = $task['argv']['url'];
         $base_path = $task['argv']['path'];
 
         $response = self::getJson($url);
 
-        if($response) {
-            //foreach($json['rateList'] as $rate) {
-            //    $user_id = $rate['id'];
-            //    $pics = $rate['pics'];
-            //    $save_dir = $base_dir . "/" . $product_name_dir . "/" . $itemId . "/" . $user_id;
-            //    foreach($pics as $pic) {
-            //        $task['type'] = "download";
-            //        $task['argv']['path'] = $save_dir;
-            //        $task['argv']['url'] = "http://" . $pic;
-            //
-            //        minfo("Task download data: %s", json_encode($task));
-            //    }
-            //}
 
-        } else {
-            $res_client->lpush("message_queue", json_encode($task));
-            minfo("Task type %s  failed send back to queue again %s " , $task['type'], json_encode($task));
+        if ($response) {
+
+            foreach ($response as $rate) {
+
+                $user_id     = $rate['id'];
+                $pics        = isset($rate['pics']) && is_array($rate['pics']) ? $rate['pics'] : [];
+                $append_pics = isset($rate['appendComment']['pics']) && is_array($rate['appendComment']['pics']) ? $rate['appendComment']['pics'] : [];
+                $final_pics  = array_merge($pics, $append_pics);
+                $save_dir    = $base_path . $user_id . "/";
+
+                if (count($final_pics) > 0) {
+
+                    if (!is_dir($save_dir)) {
+                        if (false === @mkdir($save_dir, 0777, true)) {
+                            throw new \RuntimeException(sprintf('Unable to create the %s directory', $save_dir));
+                        }
+                    }
+
+                    foreach ($final_pics as $pic) {
+
+                        $pic_url       = "http:" . $pic;
+                        $download_file = self::getImg($pic_url, $save_dir);
+                        minfo("Task download image to : %s", $download_file);
+                        usleep(100000);
+                    }
+                } else {
+                    minfo("Task download image : %s have no pics", $save_dir);
+                }
+
+            }
+
+            return true;
+
         }
-
-
-
-        $filename = self::getImg($task['argv']['url'], $task['argv']['path']);
-
+        else {
+            return false;
+        }
     }
 
-    private static function getImg($url, $path, $overwrite = false) {
+    private static function getImg($url, $path, $overwrite = false)
+    {
 
-        $imageName= basename($url);
-        if(file_exists($path.$imageName) && !$overwrite) {
-            return $path.$imageName;
+        $imageName = basename($url);
+        if (file_exists($path . $imageName) && !$overwrite) {
+            return $path . $imageName;
         }
-        $headers[] = 'Accept: image/gif, image/x-bitmap, image/jpeg, image/pjpeg';
-        $headers[] = 'Connection: Keep-Alive';
-        $headers[] = 'Content-type: application/x-www-form-urlencoded;charset=UTF-8';
+        $headers[]  = 'Accept: image/gif, image/x-bitmap, image/jpeg, image/pjpeg';
+        $headers[]  = 'Connection: Keep-Alive';
+        $headers[]  = 'Content-type: application/x-www-form-urlencoded;charset=UTF-8';
         $user_agent = 'php';
-        $process = curl_init($url);
+        $process    = curl_init($url);
         curl_setopt($process, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($process, CURLOPT_HEADER, 0);
         curl_setopt($process, CURLOPT_USERAGENT, $user_agent);
@@ -64,32 +78,36 @@ class DownloadTask implements TaskInterface
         curl_setopt($process, CURLOPT_FOLLOWLOCATION, 1);
         $image = curl_exec($process);
         curl_close($process);
-        file_put_contents($path.$imageName,$image);
+        file_put_contents($path . $imageName, $image);
 
-        return $path.$imageName;
+        return $path . $imageName;
     }
 
-    private static function getJson($base_url) {
 
-        $base_str = file_get_contents($base_url);
-        $base_str = mb_convert_encoding($base_str, 'HTML-ENTITIES', "UTF-8");
+
+    private static function getJson($base_url)
+    {
+        $base_url = "https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=527355597126&currentPage=1&picture=1";
+
+        $base_str  = file_get_contents($base_url);
+        $base_str  = mb_convert_encoding($base_str, 'HTML-ENTITIES', "UTF-8");
         $final_str = str_replace("jsonp(", "", $base_str);
-        //$final_str = str_replace("\r\n", "", $final_str);
+
         $final_str = rtrim($final_str, ")");
-        file_put_contents("products_json.json", $final_str);
 
-        $arr = json_decode($final_str, true);
-        $json_err_msg = json_last_error_msg() ;
-        $json_err = json_last_error() ;
+        $arr          = json_decode($final_str, true);
+        $json_err_msg = json_last_error_msg();
+        $json_err     = json_last_error();
 
+        if ($json_err == 0) {
 
-        if($json_err == 0){
+            return $arr['rateDetail']['rateList'];
 
-           return $arr['rateDetail']['rateList'];
-
-        } else {
+        }
+        else {
 
             merror("Json decode error  is %s and url is %s ", $json_err_msg, $base_url);
+
             return false;
         }
 

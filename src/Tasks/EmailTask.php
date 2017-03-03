@@ -9,11 +9,10 @@
 namespace Yyg\Tasks;
 require_once PROJECT_DIR . '/vendor/phpmailer/phpmailer/PHPMailerAutoload.php';
 use Yyg\Configuration\ServerConfiguration;
-use Clue\React\Redis\Client;
 
 class EmailTask implements   TaskInterface
 {
-    public static function execute(array $task, Client $res_client)
+    public static function execute(array $task)
     {
         $ses_info = ServerConfiguration::instance()->email;
 

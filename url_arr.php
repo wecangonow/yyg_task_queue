@@ -1,5 +1,6 @@
 <?php
 $tasks = [
+    //"https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=529040900238&currentPage=1&picture=1"=>["count"=> 1,"name"=>" Пылесос_Seebest_D730","itemId"=> 529040900238],
 "https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=523999488662&currentPage=1&picture=1"=>["count"=> 84,"name"=>" Apple_Iphone_6s_32GB","itemId"=> 523999488662],
 "https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=521875831541&currentPage=1&picture=1"=>["count"=> 84,"name"=>" Apple_Iphone_6s_32GB","itemId"=> 521875831541],
 "https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=538207238901&currentPage=1&picture=1"=>["count"=> 99,"name"=>" Apple_Iphone_7_128GB","itemId"=> 538207238901],
@@ -35,7 +36,6 @@ $tasks = [
 "https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=533224238534&currentPage=1&picture=1"=>["count"=> 20,"name"=>" Пылесос_Puppyoo_D521_-_D522","itemId"=> 533224238534],
 "https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=521542045266&currentPage=1&picture=1"=>["count"=> 22,"name"=>" Пылесос_Puppyoo_D521_-_D522","itemId"=> 521542045266],
 "https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=41320178520&currentPage=1&picture=1"=>["count"=> 99,"name"=>" Пылесос_Puppyoo__D9005B","itemId"=> 41320178520],
-"https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=529040900238&currentPage=1&picture=1"=>["count"=> 1,"name"=>" Пылесос_Seebest_D730","itemId"=> 529040900238],
 "https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=54120099863&currentPage=1&picture=1"=>["count"=> 0,"name"=>" Xiaomi_Mi_Hybrid_Pro","itemId"=> 54120099863],
 "https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=542520833868&currentPage=1&picture=1"=>["count"=> 3,"name"=>" Xiaomi_Mi_Hybrid_Pro","itemId"=> 542520833868],
 "https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=42398966057&currentPage=1&picture=1"=>["count"=> 6,"name"=>" Sennheiser_CX_3.00","itemId"=> 42398966057],

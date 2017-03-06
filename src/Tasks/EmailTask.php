@@ -42,9 +42,11 @@ class EmailTask implements   TaskInterface
 
         if (!$mail->send()) {
             merror("Mailer Error: %s " , $mail->ErrorInfo);
+            return false;
         }
         else {
             minfo("Task type %s  successfully to %s " , $task['type'], implode("|",$emails));
+            return true;
         }
 
     }

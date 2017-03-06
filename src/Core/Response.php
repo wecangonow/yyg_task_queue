@@ -18,6 +18,9 @@ class Response
             case "download":
                 $ret = self::downloadResponse();
                 break;
+            case "prize":
+                $ret = self::prizeResponse();
+                break;
         }
 
         return $ret;
@@ -33,6 +36,13 @@ class Response
     public static function downloadResponse()
     {
         $msg =  "server get an download url  to queue";
+        return $msg;
+    }
+
+    public static function prizeResponse()
+    {
+        $order_id = self::$task['argv']['order_id'];
+        $msg =  "server put prize task  to queue: order_id is $order_id";
         return $msg;
     }
 }

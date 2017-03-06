@@ -12,7 +12,7 @@ use Yyg\Configuration\ServerConfiguration;
 // task worker，使用Text协议
 $task_worker = new Worker('Text://0.0.0.0:12345');
 // task进程数可以根据需要多开一些
-$task_worker->count = 1;
+$task_worker->count = 15;
 $task_worker->name  = 'TaskWorker';
 
 $task_worker->onWorkerStart = function ($task_worker) {
@@ -32,7 +32,7 @@ $task_worker->onWorkerStart = function ($task_worker) {
     //if($task_worker->id == 4)
     //    $time_interval = 15;
 
-    $time_interval = 10;
+    $time_interval = 1;
 
 
     Timer::add(

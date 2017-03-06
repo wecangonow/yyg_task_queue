@@ -27,6 +27,7 @@
         "workerman/workerman": "^3.3",
         "clue/redis-react": "^1.0",
         "phpmailer/phpmailer": "~5.2",
-        "guzzlehttp/guzzle": "^6.2"
+        "guzzlehttp/guzzle": "^6.2",
+        "workerman/mysql": "^1.0"
     }
 }

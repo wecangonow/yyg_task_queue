@@ -37,6 +37,15 @@ class ServerConfiguration extends AbstractYamlConfiguration
 
             $services = $rootNode->children()->arrayNode("services");
             {
+                $mysql_server = $services->children()->arrayNode("mysql");
+                {
+                    $mysql_server->children()->scalarNode("host");
+                    $mysql_server->children()->integerNode("port");
+                    $mysql_server->children()->scalarNode("user");
+                    $mysql_server->children()->scalarNode("password");
+                    $mysql_server->children()->scalarNode("dbname");
+                    $mysql_server->children()->scalarNode("charset");
+                }
 
                 $redis_server = $services->children()->arrayNode("redis");
                 {

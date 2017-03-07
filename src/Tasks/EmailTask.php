@@ -8,13 +8,13 @@
 
 namespace Yyg\Tasks;
 require_once PROJECT_DIR . '/vendor/phpmailer/phpmailer/PHPMailerAutoload.php';
-use Yyg\Configuration\ServerConfiguration;
 
 class EmailTask implements   TaskInterface
 {
     public static function execute(array $task)
     {
-        $ses_info = ServerConfiguration::instance()->email;
+        global $factory, $configs;
+        $ses_info = $configs['services']['email'];
 
         $country = $task['argv']['country'];
         $mail = new \PHPMailer();
@@ -41,13 +41,24 @@ class EmailTask implements   TaskInterface
         }
 
         if (!$mail->send()) {
+
             merror("Mailer Error: %s " , $mail->ErrorInfo);
-            return false;
+
+            $back_message = json_encode($task);
+            $factory->createClient('localhost:6379')->then(
+                function (Client $client)  use($back_message) {
+
+                    $client->lpush("message_queue", $back_message);
+
+                    minfo("Task  failed send back to queue again %s ", $back_message);
+
+                    $client->end();
+                }
+            );
+
         }
         else {
             minfo("Task type %s  successfully to %s " , $task['type'], implode("|",$emails));
-            return true;
         }
-
     }
 }

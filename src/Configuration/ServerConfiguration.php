@@ -13,6 +13,7 @@ class ServerConfiguration extends AbstractYamlConfiguration
     public $log_path;
     public $email;
     public $redis_server_info;
+    public $mysql_server_info;
 
     public function load()
     {
@@ -98,6 +99,7 @@ class ServerConfiguration extends AbstractYamlConfiguration
         $this->timezone          = $this->processedConfig["timezone"];
         $this->queues            = $this->processedConfig["queues"];
         $this->redis_server_info = $this->processedConfig["services"]["redis_server"];
+        $this->mysql_server_info = $this->processedConfig["services"]["mysql_server"];
 
     }
 

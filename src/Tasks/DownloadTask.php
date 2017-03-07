@@ -13,6 +13,7 @@ class DownloadTask implements TaskInterface
 
     public static function execute(array $task)
     {
+        global $factory;
         $url       = $task['argv']['url'];
         $base_path = $task['argv']['path'];
 
@@ -50,11 +51,21 @@ class DownloadTask implements TaskInterface
 
             }
 
-            return true;
-
         }
         else {
-            return false;
+
+            $back_message = json_encode($task);
+            $factory->createClient('localhost:6379')->then(
+                function (Client $client)  use($back_message) {
+
+                    $client->lpush("message_queue", $back_message);
+
+                    minfo("Task  failed send back to queue again %s ", $back_message);
+
+                    $client->end();
+                }
+            );
+
         }
     }
 
@@ -87,7 +98,7 @@ class DownloadTask implements TaskInterface
 
     private static function getJson($base_url)
     {
-        $base_url = "https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=527355597126&currentPage=1&picture=1";
+        //$base_url = "https://rate.tmall.com/list_detail_rate.htm?sellerId=520&order=3&callback=jsonp&itemId=527355597126&currentPage=1&picture=1";
 
         $base_str  = file_get_contents($base_url);
         $base_str  = mb_convert_encoding($base_str, 'HTML-ENTITIES', "UTF-8");

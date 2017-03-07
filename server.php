@@ -2,7 +2,6 @@
 
 require_once __DIR__ . '/bootstrap.php';
 
-use Yyg\Configuration\ServerConfiguration;
 use Yyg\Core\Response;
 use Oasis\Mlib\Logging\LocalFileHandler;
 use Workerman\Worker;
@@ -23,13 +22,15 @@ $worker->onWorkerStart = function () {
 
 $worker->onMessage = function($connection, $data) {
 
-    global $factory;
+    global $factory, $configs;
+    require_once "config/config.php";
 
-    $factory->createClient('localhost:6379')->then(function (Client $client) use ($connection, $data) {
+    (new LocalFileHandler($configs['log_path']))->install();
+
+    $factory->createClient($configs['services']['redis']['host'] . ':' . $configs['services']['redis']['port'])->then(function (Client $client) use ($connection, $data) {
 
         $client->lpush("message_queue", $data);
 
-        (new LocalFileHandler(ServerConfiguration::instance()->log_path))->install();
         minfo("got task: %s", $data);
         $response = Response::send(json_decode($data,true));
         $connection->send($response);

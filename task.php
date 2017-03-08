@@ -3,6 +3,7 @@
 require_once __DIR__ . '/bootstrap.php';
 
 use Workerman\Worker;
+use Yyg\Core\Response;
 use Workerman\Lib\Timer;
 use Clue\React\Redis\Factory;
 use Clue\React\Redis\Client;
@@ -27,7 +28,7 @@ $task_worker->onWorkerStart = function ($task_worker) {
     $loop    = Worker::getEventLoop();
     $factory = new Factory($loop);
 
-    $time_interval = 5;
+    $time_interval = $configs['timer_interval'];
 
     Timer::add(
         $time_interval,
@@ -66,6 +67,24 @@ $task_worker->onWorkerReload = function () {
     global $configs;
     require_once "config/config.php";
 
+};
+
+$task_worker->onMessage = function($connection, $data) {
+
+    global $factory, $configs;
+
+    (new LocalFileHandler($configs['log_path']))->install();
+
+    $factory->createClient($configs['services']['redis']['host'] . ':' . $configs['services']['redis']['port'])->then(function (Client $client) use ($connection, $data) {
+
+        $client->lpush("message_queue", $data);
+
+        minfo("got task: %s", $data);
+        $response = Response::send(json_decode($data,true));
+        $connection->send($response);
+
+        $client->end();
+    });
 };
 
 Worker::runAll();

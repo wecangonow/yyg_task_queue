@@ -1,0 +1,7 @@
+# Redis key 命名规范
+
+prefix:desc:redis_data_type#id
+
+eg:
+    malaysia:user_period_consume:set#1000   马拉西亚 id为1000 的用户一段时间内消费记录  存储在redis 的set中
+    malaysia:nper_prize:sorted_set#all   马拉西亚 某一期 的所有购买用户的最大可中奖金额存储在redis sorted set中

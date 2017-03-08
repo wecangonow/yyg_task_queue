@@ -37,6 +37,7 @@ if ($handle) {
         $order_task['argv']['order_id'] = $buffer;
         fwrite($client, json_encode($order_task) . "\n");
         minfo("server response: %s", fread($client, 100));
+        sleep(1);
 
     }
 

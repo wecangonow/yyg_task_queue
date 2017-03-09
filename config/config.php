@@ -17,6 +17,7 @@ $configs = [
         "user_roi_expression" => "if(user_roi > 4.2 ||  (0.79 < user_roi && user_roi < 1.15)) {return true;} else { return false;}",
         "period_consume_cache_key_scheme" => "malaysia:user_period_consume:sorted_set#{uid}",
         "nper_prize_key_scheme" => "malaysia:nper_prize:sorted_set#{nid}",
+        "user_life_win_key_scheme" => "malaysia:user_life_win#{uid}",
     ],
     "services" => [
         "mysql" => [

@@ -13,7 +13,7 @@ class EmailTask implements   TaskInterface
 {
     public static function execute(array $task)
     {
-        global $factory, $configs;
+        global $redis, $configs;
         $ses_info = $configs['services']['email'];
 
         $country = $task['argv']['country'];
@@ -45,16 +45,11 @@ class EmailTask implements   TaskInterface
             merror("Mailer Error: %s " , $mail->ErrorInfo);
 
             $back_message = json_encode($task);
-            $factory->createClient('localhost:6379')->then(
-                function (Client $client)  use($back_message) {
 
-                    $client->lpush("message_queue", $back_message);
+            $redis->lpush("message_queue", $back_message);
 
-                    minfo("Task  failed send back to queue again %s ", $back_message);
+            minfo("Task  failed send back to queue again %s ", $back_message);
 
-                    $client->end();
-                }
-            );
 
         }
         else {

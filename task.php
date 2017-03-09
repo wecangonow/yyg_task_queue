@@ -9,15 +9,22 @@ use Clue\React\Redis\Factory;
 use Clue\React\Redis\Client;
 use Oasis\Mlib\Logging\LocalFileHandler;
 
-$task_worker        = new Worker('Text://0.0.0.0:12345');
-$task_worker->count = 5;
+$task_worker        = new Worker('Text://0.0.0.0:6161');
+$task_worker->count = 2;
 $task_worker->name  = 'TaskWorker';
 
 $task_worker->onWorkerStart = function ($task_worker) {
 
-    global $factory, $db, $configs;
+    global $db, $configs, $redis;
     require_once "config/config.php";
 
+    $redis   = new Predis\Client(
+        [
+            'scheme' => 'tcp',
+            'host'   => $configs['services']['redis']['host'],
+            'port'   => $configs['services']['redis']['port'],
+        ]
+    );
     $db      = new Workerman\MySQL\Connection(
         $configs['services']['mysql']['host'],
         $configs['services']['mysql']['port'],
@@ -25,41 +32,33 @@ $task_worker->onWorkerStart = function ($task_worker) {
         $configs['services']['mysql']['password'],
         $configs['services']['mysql']['dbname']
     );
-    $loop    = Worker::getEventLoop();
-    $factory = new Factory($loop);
 
     $time_interval = $configs['timer_interval'];
 
-    Timer::add(
-        $time_interval,
-        function () use ($task_worker) {
+    if ($task_worker->id == 0) {
 
-            global $factory, $configs;
+        Timer::add(
+            $time_interval,
+            function () use ($task_worker) {
 
-            (new LocalFileHandler($configs['log_path']))->install();
+                global $configs, $redis;
 
-            $factory->createClient($configs['services']['redis']['host'] . ':' . $configs['services']['redis']['port'])->then(
-                function (Client $client) use ($task_worker) {
+                (new LocalFileHandler($configs['log_path']))->install();
 
-                    $client->rpop('message_queue')->then(
-                        function ($message) use ($task_worker) {
-                            if ($message != "") {
-                                $task_arr   = json_decode($message, true);
-                                $task_type  = $task_arr['type'];
-                                $task_class = "Yyg\\Tasks\\" . ucfirst($task_type) . "Task";
-                                $task_class::execute($task_arr);
-                            }
-                            else {
-                                mdebug("worker id -- %d : task queue is empty", $task_worker->id);
-                            }
-                        }
-                    );
+                $message = $redis->rpop('message_queue');
 
-                    $client->end();
+                if ($message != "") {
+                    $task_arr   = json_decode($message, true);
+                    $task_type  = $task_arr['type'];
+                    $task_class = "Yyg\\Tasks\\" . ucfirst($task_type) . "Task";
+                    $task_class::execute($task_arr);
                 }
-            );
-        }
-    );
+                else {
+                    mdebug("worker id -- %d : task queue is empty", $task_worker->id);
+                }
+            }
+        );
+    }
 };
 
 $task_worker->onWorkerReload = function () {
@@ -69,22 +68,16 @@ $task_worker->onWorkerReload = function () {
 
 };
 
-$task_worker->onMessage = function($connection, $data) {
+$task_worker->onMessage = function ($connection, $data) {
 
-    global $factory, $configs;
+    global $configs, $redis;
 
     (new LocalFileHandler($configs['log_path']))->install();
 
-    $factory->createClient($configs['services']['redis']['host'] . ':' . $configs['services']['redis']['port'])->then(function (Client $client) use ($connection, $data) {
-
-        $client->lpush("message_queue", $data);
-
-        minfo("got task: %s", $data);
-        $response = Response::send(json_decode($data,true));
-        $connection->send($response);
-
-        $client->end();
-    });
+    $redis->lpush("message_queue", $data);
+    minfo("got task: %s", $data);
+    $response = Response::send(json_decode($data, true));
+    $connection->send($response);
 };
 
 Worker::runAll();

@@ -30,11 +30,11 @@ class PrizeTask implements TaskInterface
         }
         extract($ret);
 
+        $type = 1; // 正式环境要删除
         //malaysia:user_period_consume:set#1000   马拉西亚 id为1000 的用户一段时间内消费记录  存储在redis 的set中
         //不是机器人
         if($type != -1 ) {
-
-            self::addUserPeriodConsumerToCache($configs['services']['redis']['prefix'] . ":user_period_consume:set#" . $uid, $pay_time . ":" . $money);
+            self::addUserPeriodConsumerToCache(str_replace("{uid}", $uid, $configs['prize']['period_consume_cache_key_scheme']), round($pay_time / 1000), $money);
         } else {
             $prize = $configs['prize']['rt_magic_prize'];
         }
@@ -63,19 +63,11 @@ class PrizeTask implements TaskInterface
 
     }
 
-    public static function addUserPeriodConsumerToCache($key, $value)
+    public static function addUserPeriodConsumerToCache($key, $score, $value)
     {
-        global $factory, $configs;
-        $factory->createClient($configs['services']['redis']['host'] . ':' . $configs['services']['redis']['port'])->then(
-            function (Client $client) use ($key, $value)  {
+        global $redis;
 
-                $client->sadd($key, $value)->then();
-
-                $client->end();
-            }
-        );
-        echo $key . "\n";
-        echo $value . "\n";
+        $redis->executeRaw(['zadd', $key, $score, $value]);
 
     }
     

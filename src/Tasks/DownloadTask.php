@@ -13,7 +13,7 @@ class DownloadTask implements TaskInterface
 
     public static function execute(array $task)
     {
-        global $factory;
+        global $redis;
         $url       = $task['argv']['url'];
         $base_path = $task['argv']['path'];
 
@@ -55,16 +55,10 @@ class DownloadTask implements TaskInterface
         else {
 
             $back_message = json_encode($task);
-            $factory->createClient('localhost:6379')->then(
-                function (Client $client)  use($back_message) {
 
-                    $client->lpush("message_queue", $back_message);
+            $redis->lpush("message_queue", $back_message);
 
-                    minfo("Task  failed send back to queue again %s ", $back_message);
-
-                    $client->end();
-                }
-            );
+            minfo("Task  failed send back to queue again %s ", $back_message);
 
         }
     }

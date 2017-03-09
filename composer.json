@@ -25,9 +25,9 @@
         "simplon/mysql": "^1.3",
         "oasis/utils": "^1.6",
         "workerman/workerman": "^3.3",
-        "clue/redis-react": "^1.0",
         "phpmailer/phpmailer": "~5.2",
         "guzzlehttp/guzzle": "^6.2",
-        "workerman/mysql": "^1.0"
+        "workerman/mysql": "^1.0",
+        "predis/predis": "^1.1"
     }
 }

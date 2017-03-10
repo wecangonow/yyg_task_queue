@@ -5,8 +5,6 @@ require_once __DIR__ . '/bootstrap.php';
 use Workerman\Worker;
 use Yyg\Core\Response;
 use Workerman\Lib\Timer;
-use Clue\React\Redis\Factory;
-use Clue\React\Redis\Client;
 use Oasis\Mlib\Logging\LocalFileHandler;
 
 $task_worker        = new Worker('Text://0.0.0.0:6161');

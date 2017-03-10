@@ -12,20 +12,36 @@ class SyncprizeTask implements TaskInterface
 {
     public static function execute(array $task)
     {
-        global $db;
+        global $db, $redis, $configs;
 
-        $uid = $task['argv']['uid'];
 
-        $sql = "select id from `sp_user_prize_statistics` where id = $uid";
+        $sql = "select  o.uid, l.create_time, l.paid from log_notify l join `sp_order_list_parent` o on l.order_id = o.order_id where state = 'completed' ";
 
-        $row = $db->row($sql);
+        $rows = $db->query($sql);
 
-        if(empty($row)) {
-            $score = $db->row("select score from sp_users where id = $uid");
+        $key = $configs['prize']['already_consume_user_key_scheme'];
+
+        if(count($rows)) {
+            foreach($rows as $row) {
+                self::addUserPeriodConsumerToCache(
+                    str_replace("{uid}", $row['uid'], $configs['prize']['user_period_consume_key_scheme']),
+                    strtotime($row['create_time']),
+                    $row['paid']
+                );
+                $redis->executeRaw(['sadd', $key, $row['uid']]);
+                mdebug("add uid %d to redis set %s", $row['uid'], $key);
+
+            }
+
         }
-
-        echo $score . "\n";
 
     }
     
+    public static function addUserPeriodConsumerToCache($key, $score, $value)
+    {
+        global $redis;
+
+        $redis->executeRaw(['zadd', $key, $score, $value]);
+
+    }
 }

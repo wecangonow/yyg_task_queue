@@ -21,6 +21,8 @@ class Response
             case "prize":
                 $ret = self::prizeResponse();
                 break;
+            default:
+                $ret = "got a message";
         }
 
         return $ret;

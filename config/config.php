@@ -5,7 +5,7 @@ $configs = [
     "is_debug" => true,
     "log_path" => "/data/logs/tasks",
     "timezone" => "Asia/Shanghai",
-    "timer_interval" => 3,   // 执行任务定时器 时间间隔
+    "timer_interval" => 5,   // 执行任务定时器 时间间隔
     "prize"    => [
         "low_ratio"           => 0.75,
         "loose_ratio"         => 1.25,
@@ -15,9 +15,11 @@ $configs = [
         "period_time"         => 30,  // 天
         // 必须是合法的php表达式
         "user_roi_expression" => "if(user_roi > 4.2 ||  (0.79 < user_roi && user_roi < 1.15)) {return true;} else { return false;}",
-        "period_consume_cache_key_scheme" => "malaysia:user_period_consume:sorted_set#{uid}",
+        "user_period_consume_key_scheme" => "malaysia:user_period_consume:sorted_set#{uid}",
         "nper_prize_key_scheme" => "malaysia:nper_prize:sorted_set#{nid}",
         "user_life_win_key_scheme" => "malaysia:user_life_win#{uid}",
+        "user_life_pay_key_scheme" => "malaysia:user_life_pay#{uid}",
+        "already_consume_user_key_scheme" => "malaysia:already_consume_user"
     ],
     "services" => [
         "mysql" => [

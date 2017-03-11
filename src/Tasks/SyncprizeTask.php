@@ -30,10 +30,15 @@ class SyncprizeTask implements TaskInterface
                 );
                 $redis->executeRaw(['sadd', $key, $row['uid']]);
                 mdebug("add uid %d to redis set %s", $row['uid'], $key);
-
             }
 
         }
+
+        $sql = "select id from `sp_users` type = -1";
+
+        $ids = $db->query($sql);
+
+        $key = $configs['prize']['robot_set'];
 
     }
     

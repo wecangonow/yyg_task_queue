@@ -13,13 +13,15 @@ $configs = [
         "zero_ratio"          => 0,
         "rt_magic_prize"      => 888888,
         "period_time"         => 30,  // 天
+        "period_money_top"    => 500,  // 天
         // 必须是合法的php表达式
         "user_roi_expression" => "if(user_roi > 4.2 ||  (0.79 < user_roi && user_roi < 1.15)) {return true;} else { return false;}",
         "user_period_consume_key_scheme" => "malaysia:user_period_consume:sorted_set#{uid}",
         "nper_prize_key_scheme" => "malaysia:nper_prize:sorted_set#{nid}",
         "user_life_win_key_scheme" => "malaysia:user_life_win#{uid}",
         "user_life_pay_key_scheme" => "malaysia:user_life_pay#{uid}",
-        "already_consume_user_key_scheme" => "malaysia:already_consume_user"
+        "already_consume_user_key_scheme" => "malaysia:already_consume_user",
+        "robot_set" => "malaysia:robot_set"
     ],
     "services" => [
         "mysql" => [

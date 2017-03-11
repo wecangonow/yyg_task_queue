@@ -21,6 +21,6 @@ class ExecutionTime
     }
 
     public static function ExportTime(){
-        return "This script used " . self::runTime(self::$endTime, self::$startTime) . "s \n";
+        return self::runTime(self::$endTime, self::$startTime) . "s \n";
     }
 }

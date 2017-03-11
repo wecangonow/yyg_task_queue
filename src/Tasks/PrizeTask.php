@@ -10,6 +10,8 @@ class PrizeTask implements TaskInterface
     public static $user_pay_life;
     public static $user_win_life;
     public static $user_pay_period;
+    public static $ratio;
+    public static $user_roi;
 
     public static function execute(array $task)
     {
@@ -21,15 +23,13 @@ class PrizeTask implements TaskInterface
         $redis->lpush("message_queue", json_encode($task));
         // 根据订单号  获取用户 期数信息
 
-        $sql = "select l.paid, l.create_time, o.uid, u.score, u.type, true as income  from `log_notify` l join `sp_order_list_parent` o  on o.order_id = l.order_id join `sp_users` u on o.uid = u.id  where l.order_id = $order_id and l.state = 'completed'";
+        $sql = "select l.paid, unix_timestamp(l.create_time), l.description as pay_type, o.uid, u.score, u.type,  true as income  from `log_notify` l join `sp_order_list_parent` o  on o.order_id = l.order_id join `sp_users` u on o.uid = u.id  where l.order_id = $order_id and l.state = 'completed'";
 
-        //$sql = "SELECT u.type, u.score, l.uid, l.nper_id, l.pay_time, l.money FROM `sp_order_list` l join `sp_users` u
-        //        on l.uid = u.id WHERE l.pid = (select id from `sp_order_list_parent` where order_id = $order_id)";
 
         $ret = $db->row($sql);
 
         if (empty($ret)) {
-            $sql = "select l.uid, l.create_time, u.score, u.type , false as income from `sp_order_list_parent` l join `sp_users` u on u.id = l.uid where l.order_id = $order_id";
+            $sql = "select l.uid, l.create_time, l.bus_type as pay_type, u.score, u.type , false as income from `sp_order_list_parent` l join `sp_users` u on u.id = l.uid where l.order_id = $order_id";
             $ret = $db->row($sql);
         }
 
@@ -44,64 +44,92 @@ class PrizeTask implements TaskInterface
 
             self::setUserPayLife($uid, $score);
 
-            $is_first = self::firstOrder($configs['prize']['already_consume_user_key_scheme'], $uid);
 
             //如果是充值和直接购买订单
             if ($income) {
-                self::updateUserPeriodConsumer(
-                    str_replace("{uid}", $uid, $configs['prize']['period_consume_cache_key_scheme']),
-                    strtotime($create_time),
+                self::setUserPayPeriod(
+                    $uid,
+                    $create_time,
                     $paid
                 );
-                self::addUserToAlreadyConsumeSet($uid);
             }
 
-            if($is_first) {
+            if(in_array($pay_type, ['recharge', 'Recharge'])) {
+                minfo("order_id = %s is recharge only update user_pay_period");
+                return;
+            }
+
+            $is_first = self::firstOrder($uid);
+
+            self::addUserToAlreadyConsumeSet($uid);
+
+
+            if ($is_first) {
 
                 self::$max_prize = self::$user_pay_life * $configs['prize']['loose_ratio'];
 
-            } else {
+                self::$ratio = "loose_ratio";
+
+            }
+            else {
 
                 self::$user_win_life = self::getUserWinLife($uid);
 
-                if(self::$user_pay_life == 0) {
+                if (self::$user_pay_life == 0) {
                     //一分钱没有充值的用户   -1
-                    $user_roi = -1;
-                } else {
-                    $user_roi = self::$user_win_life / self::$user_pay_life;
+                    //$user_roi = -1;
+                    self::$user_roi = -1;
+                }
+                else {
+                    self::$user_roi = self::$user_win_life / self::$user_pay_life;
                 }
 
                 $user_roi_expression = $configs['prize']['user_roi_expression'];
 
-                $eval_str = str_replace('user_roi', $user_roi, $user_roi_expression);
+                $eval_str = str_replace('user_roi', self::$user_roi, $user_roi_expression);
 
                 $roi_check = eval($eval_str);
 
-                if($roi_check) {
+                if ($roi_check) {
+                    self::$max_prize = self::$user_pay_life * $configs['prize']['zero_ratio'];
+                    self::$ratio     = "zero_ratio";
 
-                    mdebug("eval result is true");
-                    self::$max_prize = 0;
+                }
+                else {
 
-                } else {
+                    self::$user_pay_period = self::getUserPayPeriod($uid);
 
-                    self::$user_pay_period =  self::getUserPayPeriod($uid);
+                    if (self::$user_pay_period > $configs['prize']['period_money_top']) {
+                        self::$max_prize = self::$user_pay_life * $configs['prize']['high_ratio'];
+                        self::$ratio     = "high_ratio";
+                    }
+                    else {
 
-                    mdebug("eval result is false");
+                        self::$max_prize = self::$user_pay_life * $configs['prize']['low_ratio'];
+                        self::$ratio     = "low_ratio";
+                    }
 
                 }
 
-                mdebug("roi is %d", $user_roi);
-                mdebug("roi expression is %s", $user_roi_expression);
-
             }
 
-        } else {
+            if ($configs['is_debug']) {
+                mdebug(
+                    "user %d : order_id = %d | user_pay_life = %s, user_pay_period = %s, max_prize = %s, user_win_life = %s, user_roi = %s, user_ratio = %s",
+                    $uid, $order_id, self::$user_pay_life, self::$user_pay_period, self::$max_prize, self::$user_win_life, self::$user_roi, self::$ratio
+                );
+            }
+
+        }
+        else {
             self::$max_prize = $configs['prize']['rt_magic_prize'];
         }
 
+
+
         ExecutionTime::End();
 
-        echo ExecutionTime::ExportTime();
+        minfo("%s::execute spend %s ", get_called_class(), ExecutionTime::ExportTime());
 
     }
 
@@ -131,11 +159,13 @@ class PrizeTask implements TaskInterface
     }
 
     //判断是否是用户首单
-    public static function firstOrder($key, $uid)
+    public static function firstOrder($uid)
     {
-        global $redis;
+        global $redis, $configs;
 
-        return $redis->executeRaw(['sismember', $key, $uid]);
+        $key = $configs['prize']['already_consume_user_key_scheme'];
+
+        return !($redis->executeRaw(['sismember', $key, $uid]));
 
     }
 
@@ -155,23 +185,6 @@ class PrizeTask implements TaskInterface
         return $redis->executeRaw(['get', $key]);
     }
 
-    public static function getUserPayPeriod($uid)
-    {
-        global $configs, $redis;
-
-        $key = str_replace("{uid}", $uid, $configs['prize']['user_period_consume_key_scheme']);
-
-        $exists = $redis->executeRaw(['exists', $key]);
-
-        if(!$exists) {
-            return 0;
-        }
-
-        $score = time() - 24 * 3600 * $configs['prize']['period_time'];
-
-        $userPayPeriodSet = $redis->executeRaw([]);
-    }
-
     public static function addUserToAlreadyConsumeSet($uid)
     {
 
@@ -180,12 +193,25 @@ class PrizeTask implements TaskInterface
         $redis->executeRaw(['sadd', $key, $uid]);
     }
 
-    public static function updateUserPeriodConsumer($key, $score, $value)
+    public static function setUserPayPeriod($uid, $score, $value)
     {
-        global $redis;
+        global $redis, $configs;
 
+        $key = str_replace("{uid}", $uid, $configs['prize']['user_period_consume_key_scheme']);
         $redis->executeRaw(['zadd', $key, $score, $value]);
 
     }
     
+    public static function getUserPayPeriod($uid)
+    {
+        global $configs, $redis;
+
+        $key = str_replace("{uid}", $uid, $configs['prize']['user_period_consume_key_scheme']);
+
+        $min_score = time() - 24 * 3600 * $configs['prize']['period_time'];
+
+        $userPayPeriodSet = $redis->executeRaw(['zrevrangebyscore', $key, "+inf", $min_score]);
+
+        return array_sum($userPayPeriodSet);
+    }
 }

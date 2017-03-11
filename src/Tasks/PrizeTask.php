@@ -187,6 +187,7 @@ class PrizeTask implements TaskInterface
 
     public static function addUserToAlreadyConsumeSet($uid)
     {
+        global $redis, $configs;
 
         $key = $configs['prize']['already_consume_user_key_scheme'];
 

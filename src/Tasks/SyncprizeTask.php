@@ -14,6 +14,18 @@ class SyncprizeTask implements TaskInterface
     {
         global $db, $redis, $configs;
 
+        $sql = "select id from `sp_users` where type = -1";
+
+
+        $ids = $db->query($sql);
+
+        $key = $configs['prize']['robot_set'];
+
+        foreach($ids as $id) {
+            mdebug("add id %d to redis set %s", $id['id'], $key);
+            $redis->executeRaw(['sadd', $key, $id['id']]);
+        }
+
 
         $sql = "select  o.uid, l.create_time, l.paid from log_notify l join `sp_order_list_parent` o on l.order_id = o.order_id where state = 'completed' ";
 
@@ -34,11 +46,6 @@ class SyncprizeTask implements TaskInterface
 
         }
 
-        $sql = "select id from `sp_users` type = -1";
-
-        $ids = $db->query($sql);
-
-        $key = $configs['prize']['robot_set'];
 
     }
     

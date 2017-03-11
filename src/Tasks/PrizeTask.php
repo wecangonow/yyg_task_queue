@@ -17,10 +17,10 @@ class PrizeTask implements TaskInterface
     {
         ExecutionTime::Start();
 
-        global $db, $configs, $redis;
+        global $db, $configs;
         $order_id = $task['argv']['order_id'];
 
-        $redis->lpush("message_queue", json_encode($task));
+        //$redis->lpush("message_queue", json_encode($task));
         // 根据订单号  获取用户 期数信息
 
         $sql = "select l.paid, unix_timestamp(l.create_time), l.description as pay_type, o.uid, u.score, u.type,  true as income  from `log_notify` l join `sp_order_list_parent` o  on o.order_id = l.order_id join `sp_users` u on o.uid = u.id  where l.order_id = $order_id and l.state = 'completed'";
@@ -38,12 +38,11 @@ class PrizeTask implements TaskInterface
         $type = 1;
         //malaysia:user_period_consume:set#1000   马拉西亚 id为1000 的用户一段时间内消费记录  存储在redis 的set中
         //不是机器人
-        if ($type != -1) {
+        if (!self::isRobot($uid)) {
 
             self::$user_pay_life = $score;
 
             self::setUserPayLife($uid, $score);
-
 
             //如果是充值和直接购买订单
             if ($income) {
@@ -122,10 +121,19 @@ class PrizeTask implements TaskInterface
 
         }
         else {
+            mdebug("I am a robot");
             self::$max_prize = $configs['prize']['rt_magic_prize'];
         }
 
+        $sql = "select nper_id from `sp_order_list` where pid in (select id from `sp_order_list_parent` where order_id = $order_id) and (index_end - index_start + 1) > 0 and bus_type = 'buy'";
 
+        $npers = $db->query($sql);
+
+        if(count($npers) > 0) {
+            foreach($npers as $nper) {
+                mdebug("nper id is %d ", $nper['nper_id']) ;
+            }
+        }
 
         ExecutionTime::End();
 
@@ -155,6 +163,17 @@ class PrizeTask implements TaskInterface
         else {
             return $redis->executeRaw(['get', $key]);
         }
+
+    }
+
+    //判断是否是用户首单
+    public static function isRobot($uid)
+    {
+        global $redis, $configs;
+
+        $key = $configs['prize']['robot_set'];
+
+        return !($redis->executeRaw(['sismember', $key, $uid]));
 
     }
 

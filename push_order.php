@@ -26,7 +26,7 @@ $handle = fopen($emails_file, "r") or die("Couldn't get handle");
 $client = stream_socket_client('tcp://127.0.0.1:6161');
 
 if ($handle) {
-    $order_task['type']                = "syncprize";
+    $order_task['type']                = "prize";
 
     while (!feof($handle)) {
 
@@ -38,7 +38,6 @@ if ($handle) {
         fwrite($client, json_encode($order_task) . "\n");
         minfo("server response: %s", fread($client, 100));
 
-        break;
     }
 
 

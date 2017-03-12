@@ -11,6 +11,9 @@ $task_worker        = new Worker('Text://0.0.0.0:6161');
 $task_worker->count = 2;
 $task_worker->name  = 'TaskWorker';
 
+Worker::$logFile = '/tmp/workerman.log';
+
+
 $task_worker->onWorkerStart = function ($task_worker) {
 
     global $db, $configs, $redis;
@@ -72,7 +75,9 @@ $task_worker->onMessage = function ($connection, $data) {
 
     (new LocalFileHandler($configs['log_path']))->install();
 
-    $redis->lpush("message_queue", $data);
+    if(json_decode($data, true)['type'] != 'fetchwin'){
+        $redis->lpush("message_queue", $data);
+    }
     minfo("got task: %s", $data);
     $response = Response::send(json_decode($data, true));
     $connection->send($response);

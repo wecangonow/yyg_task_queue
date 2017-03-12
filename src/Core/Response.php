@@ -9,7 +9,7 @@ class Response
     public static function send(array $task)
     {
         self::$task = $task;
-        $type = $task['type'];
+        $type = strtolower($task['type']);
 
         switch($type) {
             case "email":
@@ -21,11 +21,65 @@ class Response
             case "prize":
                 $ret = self::prizeResponse();
                 break;
+            case "fetchwin":
+                $ret = self::fetchwinResponse();
+                break;
             default:
                 $ret = "got a message";
         }
 
         return $ret;
+    }
+
+    /** 
+     * 生成不重复的随机数 
+     * @param  int $start  需要生成的数字开始范围 
+     * @param  int $end    结束范围 
+     * @param  int $length 需要生成的随机数个数 
+     * @return array       生成的随机数 
+     */  
+    public static function get_rand_number($start=1,$end=10,$length=4)
+    {  
+        $connt=0;  
+        $temp=array();  
+        while($connt<$length){  
+            $temp[]=mt_rand($start,$end);  
+            $data=array_unique($temp);  
+            $connt=count($data);  
+        }  
+
+        sort($data);
+        return $data;  
+    }  
+
+
+    public static function fetchwinResponse()
+    {
+        global $redis, $configs, $db;
+        $nper_id = self::$task['argv']['nper_id'];
+        $price   = self::$task['argv']['price'];
+
+
+        $key = str_replace("{nid}", $nper_id, $configs['prize']['nper_prize_key_scheme']);
+        
+        //$nums = self::get_rand_number(1, 2 * $price, $price);
+        //$uids = self::get_rand_number($price, 4 * $price, $price);
+
+        //foreach($nums as $k => $num){
+        //    $redis->executeRaw(['zadd', $key, $num, $uids[$k]]);
+        //    mdebug("add uid %d score %d to sorted set | key = %s", $uids[$k], $num, $key);
+        //}
+
+        
+        $users = $redis->executeRaw(['zrevrangebyscore', $key, "+inf", $price]);
+
+        $winner_id = $users[array_rand($users, 1)];
+
+        $score = $redis->executeRaw(['zscore', $key, $winner_id]);
+
+        mdebug("winner_id = %d, score = %d, price = %d", $winner_id, $score, $price);
+
+        return json_encode(['winner_id' => $winner_id, 'nper_id' => $nper_id, 'price' => $price]);
     }
 
     public static function emailResponse()

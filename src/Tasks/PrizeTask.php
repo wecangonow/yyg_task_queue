@@ -17,19 +17,22 @@ class PrizeTask implements TaskInterface
     {
         ExecutionTime::Start();
 
-        global $db, $configs;
-        $order_id = $task['argv']['order_id'];
+        global $db, $configs, $redis;
+        $order_id = trim($task['argv']['order_id']);
+        if(!$order_id){
+            return;
+        }
 
-        //$redis->lpush("message_queue", json_encode($task));
+        $redis->lpush("message_queue", json_encode($task));
         // 根据订单号  获取用户 期数信息
 
-        $sql = "select l.paid, unix_timestamp(l.create_time), l.description as pay_type, o.uid, u.score, u.type,  true as income  from `log_notify` l join `sp_order_list_parent` o  on o.order_id = l.order_id join `sp_users` u on o.uid = u.id  where l.order_id = $order_id and l.state = 'completed'";
+        $sql = "select l.paid, unix_timestamp(l.create_time), l.description as pay_type, o.uid, true as income  from `log_notify` l join `sp_order_list_parent` o  on o.order_id = l.order_id   where l.order_id = $order_id and l.state = 'completed'";
 
 
         $ret = $db->row($sql);
 
         if (empty($ret)) {
-            $sql = "select l.uid, l.create_time, l.bus_type as pay_type, u.score, u.type , false as income from `sp_order_list_parent` l join `sp_users` u on u.id = l.uid where l.order_id = $order_id";
+            $sql = "select uid, create_time, bus_type as pay_type, false as income from `sp_order_list_parent` where order_id = $order_id";
             $ret = $db->row($sql);
         }
 
@@ -131,7 +134,8 @@ class PrizeTask implements TaskInterface
 
         if(count($npers) > 0) {
             foreach($npers as $nper) {
-                mdebug("nper id is %d ", $nper['nper_id']) ;
+                self::setNperPrize($nper['nper_id'], self::$max_prize, $uid);
+                mdebug("nper_id = %d | max_prize = %d | uid = %d  ", $nper['nper_id'], self::$max_prize, $uid);
             }
         }
 
@@ -139,6 +143,12 @@ class PrizeTask implements TaskInterface
 
         minfo("%s::execute spend %s ", get_called_class(), ExecutionTime::ExportTime());
 
+    }
+    public static function setNperPrize($nper_id, $uid, $prize)
+    {
+        global $configs, $redis;
+        $key = str_replace("{nid}", $nper_id, $configs['prize']['nper_prize_key_scheme']);
+        $redis->executeRaw(['zadd', $key, $prize, $uid]);
     }
 
     public static function getUserWinLife($uid)

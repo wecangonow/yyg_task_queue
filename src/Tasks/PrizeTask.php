@@ -25,7 +25,7 @@ class PrizeTask implements TaskInterface
 
         // 根据订单号  获取用户 期数信息
 
-        $sql = "select l.paid, unix_timestamp(l.create_time), l.description as pay_type, o.uid, true as income  from `log_notify` l join `sp_order_list_parent` o  on o.order_id = l.order_id   where l.order_id = $order_id and l.state = 'completed'";
+        $sql = "select l.paid,l.order_id as orderid, unix_timestamp(l.create_time), l.description as pay_type, o.uid, true as income  from `log_notify` l join `sp_order_list_parent` o  on o.order_id = l.order_id   where l.order_id = $order_id and l.state = 'completed'";
 
 
         $ret = $db->row($sql);
@@ -41,14 +41,13 @@ class PrizeTask implements TaskInterface
         //不是机器人
         if (!self::isRobot($uid)) {
 
-
-
             //如果是充值和直接购买订单
             if ($income) {
+                $paid = str_replace("recharge", "", $paid);
                 self::setUserPayPeriod(
                     $uid,
                     $create_time,
-                    $paid
+                    $orderid . "_" . $paid
                 );
             }
 
@@ -227,7 +226,11 @@ class PrizeTask implements TaskInterface
         }
 
         $userPayPeriodSet = $redis->executeRaw(['zrevrangebyscore', $key, "+inf", $min_score]);
+        $total = 0;
+        array_walk($userPayPeriodSet, function($value) use (&$total) {
+            $total += explode("_", $value)['1'];
+        });
 
-        return array_sum($userPayPeriodSet);
+        return $total;
     }
 }

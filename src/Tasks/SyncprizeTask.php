@@ -28,17 +28,18 @@ class SyncprizeTask implements TaskInterface
         }
 
 
-        $sql = "select  o.uid, l.create_time, l.paid from log_notify l join `sp_order_list_parent` o on l.order_id = o.order_id where state = 'completed' ";
+        $sql = "select  o.uid, l.order_id, l.create_time, l.paid from log_notify l join `sp_order_list_parent` o on l.order_id = o.order_id where state = 'completed' ";
 
         $rows = $db->query($sql);
 
 
         if(count($rows)) {
             foreach($rows as $row) {
+                $paid = str_replace("recharge", "", $row['paid']);
                 self::addUserPeriodConsumerToCache(
                     str_replace("{uid}", $row['uid'], $configs['prize']['user_period_consume_key_scheme']),
                     strtotime($row['create_time']),
-                    $row['paid']
+                    $row['order_id'] . "_" . $paid
                 );
             }
 

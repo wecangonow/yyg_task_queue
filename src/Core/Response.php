@@ -57,14 +57,17 @@ class Response
     {
         global $redis, $configs, $db;
         $nper_id = self::$task['argv']['nper_id'];
-        $price   = self::$task['argv']['price'];
+        $gid     = self::$task['argv']['gid'];
 
+        $price = $db->row("select price from `sp_goods` where id = $gid")['price'];
+
+        //mdebug("goods %d price is %s", $gid, json_encode($price));
 
         $key = str_replace("{nid}", $nper_id, $configs['prize']['nper_prize_key_scheme']);
         
         //$nums = self::get_rand_number(1, 2 * $price, $price);
         //$uids = self::get_rand_number($price, 4 * $price, $price);
-
+        //
         //foreach($nums as $k => $num){
         //    $redis->executeRaw(['zadd', $key, $num, $uids[$k]]);
         //    mdebug("add uid %d score %d to sorted set | key = %s", $uids[$k], $num, $key);
@@ -77,7 +80,7 @@ class Response
 
         $score = $redis->executeRaw(['zscore', $key, $winner_id]);
 
-        mdebug("winner_id = %d, score = %d, price = %d", $winner_id, $score, $price);
+        mdebug("nper_id = %d, winner_id = %d, score = %d, price = %d", $nper_id, $winner_id, $score, $price);
 
         return json_encode(['winner_id' => $winner_id, 'nper_id' => $nper_id, 'price' => $price]);
     }

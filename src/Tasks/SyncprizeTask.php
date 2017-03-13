@@ -10,6 +10,7 @@ namespace Yyg\Tasks;
 
 class SyncprizeTask implements TaskInterface
 {
+    //同步工作包括， 同步机器人id集合 , 同步单用户历史真实入账集合, 同步已产生第一单用户集合
     public static function execute(array $task)
     {
         global $db, $redis, $configs;
@@ -31,7 +32,6 @@ class SyncprizeTask implements TaskInterface
 
         $rows = $db->query($sql);
 
-        $key = $configs['prize']['already_consume_user_key_scheme'];
 
         if(count($rows)) {
             foreach($rows as $row) {
@@ -40,12 +40,21 @@ class SyncprizeTask implements TaskInterface
                     strtotime($row['create_time']),
                     $row['paid']
                 );
+            }
+
+        }
+
+        $sql = "select  DISTINCT o.uid from `sp_order_list_parent` o join sp_users u on o.uid = u.id  where o.pay_status = 3 and o.bus_type ='buy' and u.type = 1 ";
+
+        $key = $configs['prize']['already_consume_user_key_scheme'];
+        $rows = $db->query($sql);
+        if(count($rows)) {
+            foreach($rows as $row) {
                 $redis->executeRaw(['sadd', $key, $row['uid']]);
                 mdebug("add uid %d to redis set %s", $row['uid'], $key);
             }
 
         }
-
 
     }
     

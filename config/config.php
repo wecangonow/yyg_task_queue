@@ -5,7 +5,7 @@ $configs = [
     "is_debug" => true,
     "log_path" => "/data/logs/tasks",
     "timezone" => "Asia/Shanghai",
-    "timer_interval" => 1,   // 执行任务定时器 时间间隔
+    "timer_interval" => 3,   // 执行任务定时器 时间间隔
     "prize"    => [
         "low_ratio"           => 0.75,
         "loose_ratio"         => 1.25,
@@ -19,7 +19,7 @@ $configs = [
         "user_period_consume_key_scheme" => "malaysia:user_period_consume:sorted_set#{uid}",
         "nper_prize_key_scheme" => "malaysia:nper_prize:sorted_set#{nid}",
         "user_life_win_key_scheme" => "malaysia:user_life_win#{uid}",
-        "user_life_pay_key_scheme" => "malaysia:user_life_pay#{uid}",
+        //"user_life_pay_key_scheme" => "malaysia:user_life_pay#{uid}",
         "already_consume_user_key_scheme" => "malaysia:already_consume_user",
         "robot_set" => "malaysia:robot_set"
     ],

@@ -10,4 +10,4 @@ eg:
 ['type' => 'syncwin', 'argv' => ['uid'=>1, 'nper_id' => 2, 'price' => 10]]
 
 获取随机中奖用户
-['type' => 'fetchwin', 'argv' => ['nper_id' => 2, 'price' => 10]]  // price 为该期奖品的价格
+['type' => 'fetchwin', 'argv' => ['nper_id' => 2, 'gid' => 10]]  // gid 为该期奖品id

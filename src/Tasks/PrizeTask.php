@@ -17,13 +17,12 @@ class PrizeTask implements TaskInterface
     {
         ExecutionTime::Start();
 
-        global $db, $configs, $redis;
+        global $db, $configs;
         $order_id = trim($task['argv']['order_id']);
         if(!$order_id){
             return;
         }
 
-        $redis->lpush("message_queue", json_encode($task));
         // 根据订单号  获取用户 期数信息
 
         $sql = "select l.paid, unix_timestamp(l.create_time), l.description as pay_type, o.uid, true as income  from `log_notify` l join `sp_order_list_parent` o  on o.order_id = l.order_id   where l.order_id = $order_id and l.state = 'completed'";
@@ -38,14 +37,11 @@ class PrizeTask implements TaskInterface
 
         extract($ret);
 
-        $type = 1;
         //malaysia:user_period_consume:set#1000   马拉西亚 id为1000 的用户一段时间内消费记录  存储在redis 的set中
         //不是机器人
         if (!self::isRobot($uid)) {
 
-            self::$user_pay_life = $score;
 
-            self::setUserPayLife($uid, $score);
 
             //如果是充值和直接购买订单
             if ($income) {
@@ -60,6 +56,8 @@ class PrizeTask implements TaskInterface
                 minfo("order_id = %s is recharge only update user_pay_period");
                 return;
             }
+
+            self::$user_pay_life = self::getUserPayPeriod($uid, "life");
 
             $is_first = self::firstOrder($uid);
 
@@ -99,7 +97,7 @@ class PrizeTask implements TaskInterface
                 }
                 else {
 
-                    self::$user_pay_period = self::getUserPayPeriod($uid);
+                    self::$user_pay_period = self::getUserPayPeriod($uid, "period");
 
                     if (self::$user_pay_period > $configs['prize']['period_money_top']) {
                         self::$max_prize = self::$user_pay_life * $configs['prize']['high_ratio'];
@@ -176,14 +174,13 @@ class PrizeTask implements TaskInterface
 
     }
 
-    //判断是否是用户首单
     public static function isRobot($uid)
     {
         global $redis, $configs;
 
         $key = $configs['prize']['robot_set'];
 
-        return !($redis->executeRaw(['sismember', $key, $uid]));
+        return $redis->executeRaw(['sismember', $key, $uid]);
 
     }
 
@@ -198,21 +195,6 @@ class PrizeTask implements TaskInterface
 
     }
 
-    public static function setUserPayLife($uid, $score)
-    {
-        global $redis, $configs;
-        $key = str_replace("{uid}", $uid, $configs['prize']['user_life_pay_key_scheme']);
-        $redis->executeRaw(['set', $key, $score]);
-
-    }
-
-    public static function getUserPayLife($uid)
-    {
-        global $redis, $configs;
-        $key = str_replace("{uid}", $uid, $configs['prize']['user_life_pay_key_scheme']);
-
-        return $redis->executeRaw(['get', $key]);
-    }
 
     public static function addUserToAlreadyConsumeSet($uid)
     {
@@ -232,13 +214,17 @@ class PrizeTask implements TaskInterface
 
     }
     
-    public static function getUserPayPeriod($uid)
+    public static function getUserPayPeriod($uid, $range = "life")
     {
         global $configs, $redis;
 
         $key = str_replace("{uid}", $uid, $configs['prize']['user_period_consume_key_scheme']);
 
-        $min_score = time() - 24 * 3600 * $configs['prize']['period_time'];
+        if($range == "period") {
+            $min_score = time() - 24 * 3600 * $configs['prize']['period_time'];
+        } else {
+            $min_score = "-inf";
+        }
 
         $userPayPeriodSet = $redis->executeRaw(['zrevrangebyscore', $key, "+inf", $min_score]);
 

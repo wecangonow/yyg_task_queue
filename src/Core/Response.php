@@ -80,7 +80,7 @@ class Response
 
         $score = $redis->executeRaw(['zscore', $key, $winner_id]);
 
-        mdebug("nper_id = %d, winner_id = %d, score = %d, price = %d", $nper_id, $winner_id, $score, $price);
+        mdebug("nper_id = %d, winner_id = %d, score = %s, price = %s", $nper_id, $winner_id, $score, $price);
 
         return json_encode(['winner_id' => $winner_id, 'nper_id' => $nper_id, 'price' => $price]);
     }

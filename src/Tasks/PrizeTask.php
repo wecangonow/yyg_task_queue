@@ -57,6 +57,7 @@ class PrizeTask implements TaskInterface
             }
 
             self::$user_pay_life = self::getUserPayPeriod($uid, "life");
+            self::$user_pay_period = self::getUserPayPeriod($uid, "period");
 
             $is_first = self::firstOrder($uid);
 
@@ -65,7 +66,7 @@ class PrizeTask implements TaskInterface
 
             if ($is_first) {
 
-                self::$max_prize = self::$user_pay_life * $configs['prize']['loose_ratio'];
+                self::$max_prize = self::$user_pay_period * $configs['prize']['loose_ratio'];
 
                 self::$ratio = "loose_ratio";
 
@@ -90,21 +91,18 @@ class PrizeTask implements TaskInterface
                 $roi_check = eval($eval_str);
 
                 if ($roi_check) {
-                    self::$max_prize = self::$user_pay_life * $configs['prize']['zero_ratio'];
-                    self::$ratio     = "zero_ratio";
+                    self::$max_prize = self::$user_pay_life * $configs['prize']['kill_ratio'];
+                    self::$ratio     = "kill_ratio";
 
                 }
                 else {
 
-                    self::$user_pay_period = self::getUserPayPeriod($uid, "period");
-
-                    if (self::$user_pay_period > $configs['prize']['period_money_top']) {
-                        self::$max_prize = self::$user_pay_life * $configs['prize']['high_ratio'];
+                    if (self::$user_pay_life > $configs['prize']['period_money_top']) {
+                        self::$max_prize = max(self::$user_pay_period * $configs['prize']['high_ratio'], self::$user_pay_life * $configs['prize']['kill_ratio']);
                         self::$ratio     = "high_ratio";
                     }
                     else {
-
-                        self::$max_prize = self::$user_pay_life * $configs['prize']['low_ratio'];
+                        self::$max_prize = max(self::$user_pay_period * $configs['prize']['low_ratio'], self::$user_pay_life * $configs['prize']['kill_ratio']);
                         self::$ratio     = "low_ratio";
                     }
 
@@ -141,11 +139,11 @@ class PrizeTask implements TaskInterface
         minfo("%s::execute spend %s ", get_called_class(), ExecutionTime::ExportTime());
 
     }
-    public static function setNperPrize($nper_id, $uid, $prize)
+    public static function setNperPrize($nper_id, $uid, $score)
     {
         global $configs, $redis;
         $key = str_replace("{nid}", $nper_id, $configs['prize']['nper_prize_key_scheme']);
-        $redis->executeRaw(['zadd', $key, $prize, $uid]);
+        $redis->executeRaw(['zadd', $key, $uid, $score]);
     }
 
     public static function getUserWinLife($uid)

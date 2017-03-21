@@ -8,7 +8,7 @@ use Workerman\Lib\Timer;
 use Oasis\Mlib\Logging\LocalFileHandler;
 
 $task_worker        = new Worker('Text://0.0.0.0:6161');
-$task_worker->count = 2;
+$task_worker->count = 5;
 $task_worker->name  = 'TaskWorker';
 
 Worker::$logFile = '/tmp/workerman.log';
@@ -36,7 +36,7 @@ $task_worker->onWorkerStart = function ($task_worker) {
 
     $time_interval = $configs['timer_interval'];
 
-    if ($task_worker->id == 0) {
+    //if ($task_worker->id == 0 || $task_worker->id == 1) {
 
         Timer::add(
             $time_interval,
@@ -59,7 +59,7 @@ $task_worker->onWorkerStart = function ($task_worker) {
                 }
             }
         );
-    }
+    //}
 };
 
 $task_worker->onWorkerReload = function () {

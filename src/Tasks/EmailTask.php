@@ -46,7 +46,7 @@ class EmailTask implements   TaskInterface
 
             $back_message = json_encode($task);
 
-            $redis->lpush("message_queue", $back_message);
+            //$redis->lpush("message_queue", $back_message);
 
             minfo("Task  failed send back to queue again %s ", $back_message);
 

@@ -4,8 +4,9 @@ $configs = [
 
     "is_debug" => true,
     "log_path" => "/data/logs/tasks",
+    "file_path" => "/data/logs/", //存放程序生成的报表文件
     "timezone" => "Asia/Shanghai",
-    "timer_interval" => 3,   // 执行任务定时器 时间间隔
+    "timer_interval" => 2,   // 执行任务定时器 时间间隔
     "prize"    => [
         "low_ratio"           => 0.75,
         "loose_ratio"         => 10,
@@ -21,7 +22,9 @@ $configs = [
         "user_life_win_key_scheme" => "malaysia:user_life_win#{uid}",
         //"user_life_pay_key_scheme" => "malaysia:user_life_pay#{uid}",
         "already_consume_user_key_scheme" => "malaysia:already_consume_user",
-        "robot_set" => "malaysia:robot_set"
+        "robot_set" => "malaysia:robot_set",
+        "goods_open_result" => "malaysia:goods_open_result:set#{gid}",  //存储商品相关的期号 关联一个hash 结构
+        "goods_open_result_related_info" => "malaysia:goods_open_result_related:hash#{nid}",  // nid  nper_id
     ],
     "services" => [
         "mysql" => [

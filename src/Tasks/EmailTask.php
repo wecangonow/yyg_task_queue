@@ -26,7 +26,7 @@ class EmailTask implements   TaskInterface
         $mail->SMTPAuth = $ses_info['auth'];
         $mail->Username = $ses_info['username'];
         $mail->Password = $ses_info['password'];
-        //$mail->SMTPDebug = 2;
+        $mail->SMTPDebug = 2;
         $mail->setFrom($ses_info['info'][$country]['sender'], $task['argv']['sender_info']);
         $mail->addReplyTo($ses_info['info'][$country]['receiver']);
         $mail->CharSet = 'UTF-8';

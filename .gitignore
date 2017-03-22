@@ -3,4 +3,5 @@ composer.lock
 .idea/*
 logs/*
 *.csv
+config/*.php
 config/*.yml

@@ -28,13 +28,13 @@ class SyncwinTask implements TaskInterface
         if(!empty($ret)) {
 
             $key = str_replace("{uid}", $ret['luck_uid'], $configs['prize']['user_life_win_key_scheme']);
-            $redis->executeRaw(['incrby', $key, $ret['price']]);
+            $redis->executeRaw(['incrby', $key, int($ret['price'])]);
             minfo("uid %s win nper %d added %d to user_win_life", $ret['luck_uid'], $nper_id, $ret['price']);
         } else {
 
             $back_message = json_encode($task);
+            merror("syncwin failed %s ", $back_message);
 
-            $redis->lpush("message_queue", $back_message);
         }
 
         ExecutionTime::End();

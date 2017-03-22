@@ -14,20 +14,20 @@ services:
         host: 127.0.0.1
         port: 6379
     email:
-        host: email-smtp.us-east-1.amazonaws.com
+        host:
         port: 587
         auth: true
-        username: AKIAJDAMWWQWXQQBUJKQ
-        password: AiGEbjJx7gqoyw38kQg8AKgBiylQvXgpQna2qaZlaxmK
+        username:
+        password:
         info:
             malaysia:
-                sender: hello@1rmhunt.com
-                receiver: hello@1rmhunt.com
-                title: 1RM HUNT
+                sender:
+                receiver:
+                title:
             turkey:
-                sender: destek@turnavi.com
-                receiver: destek@turnavi.com
-                title: ÜCRETSİZ TURNAVI PARASI
+                sender:
+                receiver:
+                title:
             russia:
                 sender:
                 receiver:

@@ -1,7 +1,7 @@
 <?php
 
 return $email_tpl =  [
-    "country" => "turkey", // one of malaysia turkey russia
+    "country" => "malaysia", // one of malaysia turkey russia
     "subject" => "TURNAVI ÖDEME BİLGİLENDİRMESİ",
     "body" => '
 

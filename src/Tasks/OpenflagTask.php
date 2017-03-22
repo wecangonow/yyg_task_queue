@@ -16,7 +16,7 @@ class OpenflagTask implements TaskInterface
     {
         global $redis, $configs, $db;
 
-        $flag      = ($task['argv']['flag']) ? 'true' : 'false';
+        $flag = $task['argv']['flag'];
         $gid       = $task['argv']['gid'];
         $nper_id   = $task['argv']['nper_id'];
         $sum_times = $task['argv']['sum_times'];
@@ -27,7 +27,7 @@ class OpenflagTask implements TaskInterface
         $set_key  = str_replace("{gid}", $gid, $configs['prize']['goods_open_result']);
         $hash_key = str_replace("{nid}", $nper_id, $configs['prize']['goods_open_result_related_info']);
 
-        $setting_sql = "select `percentage`, `user_percentage` from `sp_rt_random_winning` where gid = $gid";
+        $setting_sql    = "select `percentage`, `user_percentage` from `sp_rt_random_winning` where gid = $gid";
         $random_setting = $db->row($setting_sql);
 
         $percentage          = isset($random_setting['percentage']) ? $random_setting['percentage'] : "";
@@ -40,7 +40,12 @@ class OpenflagTask implements TaskInterface
 "
             );
 
-            mdebug("nper_id %d gid %d trigger user buy percent alert | trigger_info %s", $nper_id, $gid, json_encode($trigger_info));
+            mdebug(
+                "nper_id %d gid %d trigger user buy percent alert | trigger_info %s",
+                $nper_id,
+                $gid,
+                json_encode($trigger_info)
+            );
         }
 
         $redis->executeRaw(['sadd', $set_key, $nper_id]);
@@ -57,7 +62,7 @@ class OpenflagTask implements TaskInterface
                 "user_buy_percentage",
                 $user_buy_percentage,
                 "trigger_info",
-                json_encode($trigger_info)
+                json_encode($trigger_info),
             ]
         );
 

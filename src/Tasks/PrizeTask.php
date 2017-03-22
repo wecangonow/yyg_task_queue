@@ -119,7 +119,7 @@ class PrizeTask implements TaskInterface
 
         }
         else {
-            mdebug("I am a robot");
+            mdebug("uid %d is a robot", $uid);
             self::$max_prize = $configs['prize']['rt_magic_prize'];
         }
 

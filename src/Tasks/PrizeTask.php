@@ -160,7 +160,7 @@ class PrizeTask implements TaskInterface
 
             $user_win_total = $db->row($sql)['total'];
 
-            $redis->executeRaw(['set', $key, int($user_win_total)]);
+            $redis->executeRaw(['set', $key, (int)$user_win_total]);
 
             return $user_win_total;
 

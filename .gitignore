@@ -4,4 +4,6 @@ composer.lock
 logs/*
 *.csv
 config/*.php
+*.php
+!bootstrap.php
 config/*.yml

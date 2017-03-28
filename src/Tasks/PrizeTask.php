@@ -25,7 +25,7 @@ class PrizeTask implements TaskInterface
 
         // 根据订单号  获取用户 期数信息
 
-        $sql = "select l.paid,l.order_id as orderid, unix_timestamp(l.create_time), l.description as pay_type, o.uid, true as income  from `log_notify` l join `sp_order_list_parent` o  on o.order_id = l.order_id   where l.order_id = $order_id and l.state = 'completed'";
+        $sql = "select l.paid,l.order_id as orderid, unix_timestamp(l.create_time) as create_time, l.description as pay_type, o.uid, true as income  from `log_notify` l join `sp_order_list_parent` o  on o.order_id = l.order_id   where l.order_id = $order_id and l.state = 'completed'";
 
 
         $ret = $db->row($sql);
@@ -47,12 +47,12 @@ class PrizeTask implements TaskInterface
                 self::setUserPayPeriod(
                     $uid,
                     $create_time,
-                    $orderid . "_" . $paid
+                    $order_id . "_" . $paid
                 );
             }
 
             if(in_array($pay_type, ['recharge', 'Recharge'])) {
-                minfo("order_id = %s is recharge only update user_pay_period");
+                minfo("order_id = %s is recharge only update user_pay_period", $order_id);
                 return;
             }
 

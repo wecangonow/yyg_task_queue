@@ -154,21 +154,36 @@ class PrizeTask implements TaskInterface
 
         $exists = $redis->executeRaw(['exists', $key]);
 
+        $ret = 0;
+
         if (!$exists) {
 
-            $sql = "select ifnull(sum(g.price), 0) as total from sp_win_record r join sp_goods g on r.goods_id = g.id   where luck_uid = $uid";
+            $sql = "select g.price, r.nper_id from sp_win_record r join sp_goods g on r.goods_id = g.id   where r.luck_uid = $uid";
 
-            $user_win_total = $db->row($sql)['total'];
+            $user_win_total = $db->query($sql);
 
-            $redis->executeRaw(['set', $key, (int)$user_win_total]);
+            if(count($user_win_total) > 0) {
+                foreach($user_win_total as $info) {
+                    $ret += $info['price'];
+                    $val = $info['nper_id'] . "_" . $info['price'];
+                    $redis->executeRaw(['sadd', $key, $val]);
+                }
 
-            return $user_win_total;
+            }
 
+            return $ret;
         }
         else {
-            return $redis->executeRaw(['get', $key]);
-        }
+            $user_win_total = $redis->executeRaw(['smembers', $key]);
 
+            if(count($user_win_total) > 0) {
+                array_walk($user_win_total, function($value) use (&$ret) {
+                    $ret += explode("_", $value)['1'];
+                });
+            }
+
+            return $ret;
+        }
     }
 
     public static function isRobot($uid)

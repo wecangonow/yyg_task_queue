@@ -1,7 +1,7 @@
 <?php
 
 $win_records = [
-    ['type' => 'syncprize', 'argv'=>['nper_id'=>1892]]
+    ['type' => 'syncwin', 'argv'=>['nper_id'=>1000]]
 ];
 $fetch_winners = [
     ['type' => 'fetchwin', 'argv'=>['nper_id'=>1000, 'gid'=> 100]],
@@ -43,13 +43,6 @@ $check_win = ['type' => 'checkwin', 'argv' => [
 ]];
 
 
-$client = stream_socket_client('tcp://127.0.0.1:6161');
-fwrite($client, json_encode($check_win) . "\n");
-echo fread($client, 100) . "\n";
-fclose($client);
-
-
-die;
 
 foreach($win_records as $record){
     $client = stream_socket_client('tcp://127.0.0.1:6161');
@@ -57,6 +50,13 @@ foreach($win_records as $record){
     echo fread($client, 100) . "\n";
     fclose($client);
 }
+
+die;
+$client = stream_socket_client('tcp://127.0.0.1:6161');
+fwrite($client, json_encode($check_win) . "\n");
+echo fread($client, 100) . "\n";
+fclose($client);
+
 
 //foreach($fetch_winners as $record){
 //    $client = stream_socket_client('tcp://127.0.0.1:6161');

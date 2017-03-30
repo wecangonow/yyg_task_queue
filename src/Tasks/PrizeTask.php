@@ -139,11 +139,11 @@ class PrizeTask implements TaskInterface
         minfo("%s::execute spend %s ", get_called_class(), ExecutionTime::ExportTime());
 
     }
-    public static function setNperPrize($nper_id, $uid, $score)
+    public static function setNperPrize($nper_id, $score, $member)
     {
         global $configs, $redis;
         $key = str_replace("{nid}", $nper_id, $configs['prize']['nper_prize_key_scheme']);
-        $redis->executeRaw(['zadd', $key, $uid, $score]);
+        $redis->executeRaw(['zadd', $key, $score, $member]);
     }
 
     public static function getUserWinLife($uid)

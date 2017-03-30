@@ -132,6 +132,14 @@ class OpenBonusTask implements TaskInterface
                     $ret['win_amount'] = $decrby;
 
                     //发送异步mysql update任务
+                    $sql_task = ['type' => 'bonusSync', 'argv' => ['uid' => $uid, 'amount' => $decrby]];
+                    $sql_message = json_encode($sql_task);
+
+                    $redis->lpush("message_queue", $sql_message);
+
+                    if($configs['is_debug']) {
+                        mdebug("bonus sql sync task | %s", $sql_message);
+                    }
 
                     echo json_encode($ret);
                 }

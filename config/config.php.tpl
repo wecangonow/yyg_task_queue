@@ -35,9 +35,9 @@ $configs = [
         // 保存用户每期的返现详细记录    包括 返现时间， 金额
         "user_get_bonus_record_per_nper" => "malaysia:bonus:user_get_bonus_recored_per_nper:hash#{uid}_{nid}",
         //每期的夺宝成功用户的记录  该集合的值为  返现的用户的详细记录的hash key
-        "nper_get_bonus_success_user_records"    => "malaysia:bonus:nper_get_bonus_success_user_record:set#{nid}",
+        "nper_get_bonus_success_user_records"    => "malaysia:bonus:nper_get_bonus_success_user_record:sorted_set#{nid}",
         //每期的夺宝失败用户的记录  该集合的值为  返现的用户的详细记录的hash key
-        "nper_get_bonus_failed_user_records" => "malaysia:bonus:nper_get_bonus_failed_user_record:set#{nid}",
+        "nper_get_bonus_failed_user_records" => "malaysia:bonus:nper_get_bonus_failed_user_record:sorted_set#{nid}",
         //每用户所有期的是否夺宝状态记录  score 0 1
         "user_every_nper_get_bonus_state" => "malaysia:bonus:user_every_nper_get_bonus_state:sorted_set#{uid}",
         "user_info" => "malaysia:bonus:user_info:hash#{uid}"

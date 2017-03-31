@@ -16,6 +16,18 @@ class InitBonusTask implements TaskInterface
         global $db, $redis, $configs;
         $nper_id = $task['argv']['nper_id'];
 
+        $nper_bonus_total_key = str_replace(
+            "{nid}",
+            $nper_id,
+            $configs['bonus']['nper_bonus_total']
+        );
+
+        if ($redis->exists($nper_bonus_total_key)) {
+            minfo("nper_id %d bonus has inited", $nper_id);
+
+            return;
+        }
+
         $nper_user_pay_key = str_replace("{nid}", $nper_id, $configs['bonus']['nper_user_pay_key']);
 
         $sql = "select sum(money) as spend_amount , uid from sp_order_list  where nper_id = $nper_id and dealed = 'true'  group by uid";
@@ -64,12 +76,7 @@ class InitBonusTask implements TaskInterface
             }
 
             // 向上取整
-            $bonus_total          = ceil($goods_price * $configs['bonus']['bonus_percent']);
-            $nper_bonus_total_key = str_replace(
-                "{nid}",
-                $nper_id,
-                $configs['bonus']['nper_bonus_total']
-            );
+            $bonus_total = ceil($goods_price * $configs['bonus']['bonus_percent']);
             $redis->executeRaw(['set', $nper_bonus_total_key, (int)$bonus_total]);
 
             if ($configs['is_debug']) {

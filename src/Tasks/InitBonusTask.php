@@ -8,11 +8,14 @@
 
 namespace Yyg\Tasks;
 
+use Yyg\Core\ExecutionTime;
 class InitBonusTask implements TaskInterface
 {
 
     public static function execute(array $task)
     {
+        ExecutionTime::Start();
+
         global $db, $redis, $configs;
         $nper_id = $task['argv']['nper_id'];
 
@@ -30,7 +33,7 @@ class InitBonusTask implements TaskInterface
 
         $nper_user_pay_key = str_replace("{nid}", $nper_id, $configs['bonus']['nper_user_pay_key']);
 
-        $sql = "select sum(money) as spend_amount , uid from sp_order_list  where nper_id = $nper_id and dealed = 'true'  group by uid";
+        $sql = "select sum(money) as spend_amount , uid from sp_order_list  where nper_id = $nper_id and dealed = 'true' and uid not in (select luck_uid from sp_nper_list where id = $nper_id )  group by uid";
 
         $nper_info = $db->query($sql);
 
@@ -84,6 +87,10 @@ class InitBonusTask implements TaskInterface
             }
 
         }
+
+        ExecutionTime::End();
+
+        minfo("%s::execute spend %s ", get_called_class(), ExecutionTime::ExportTime());
     }
 
 }

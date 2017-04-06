@@ -51,6 +51,7 @@ class OpenBonusTask implements TaskInterface
                 $remain = $redis->executeRaw(['get', $nper_bonus_total_key]);
 
                 $num_user_can_get = rand(1, floor(min($spend, $remain) / 2));
+                $num_user_cat_get = min($num_user_cat_get, $configs['bouns']['max_bonus']);
 
                 if ($configs['is_debug']) {
                     mdebug("before user %d purchase  nper %d | fund remain %d ", $uid, $nper_id, $remain);

@@ -8,7 +8,7 @@ use Workerman\Lib\Timer;
 use Oasis\Mlib\Logging\LocalFileHandler;
 
 $task_worker        = new Worker('Text://0.0.0.0:6161');
-$task_worker->count = 5;
+$task_worker->count = 3;
 $task_worker->name  = 'TaskWorker';
 
 Worker::$logFile = '/tmp/workerman.log';
@@ -36,7 +36,7 @@ $task_worker->onWorkerStart = function ($task_worker) {
 
     $time_interval = $configs['timer_interval'];
 
-    //if ($task_worker->id == 0 || $task_worker->id == 1) {
+    if ($task_worker->id == 0) {
 
         Timer::add(
             $time_interval,
@@ -59,7 +59,31 @@ $task_worker->onWorkerStart = function ($task_worker) {
                 }
             }
         );
-    //}
+    }
+    if ($task_worker->id == 1 ) {
+
+        Timer::add(
+            0.5,
+            function () use ($task_worker) {
+
+                global $configs, $redis;
+
+                (new LocalFileHandler($configs['log_path']))->install();
+
+                $message = $redis->rpop($configs['robot_bonus_queue']);
+
+                if ($message != "") {
+                    $task_arr   = json_decode($message, true);
+                    $task_type  = $task_arr['type'];
+                    $task_class = "Yyg\\Tasks\\" . ucfirst($task_type) . "Task";
+                    $task_class::execute($task_arr);
+                }
+                else {
+                    mdebug("worker id -- %d : robot bonus queue is empty", $task_worker->id);
+                }
+            }
+        );
+    }
 };
 
 $task_worker->onWorkerReload = function () {
@@ -75,9 +99,14 @@ $task_worker->onMessage = function ($connection, $data) {
 
     (new LocalFileHandler($configs['log_path']))->install();
 
-    if(json_decode($data, true)['type'] != 'fetchwin'){
+    $type = json_decode($data, true)['type']; 
+
+    $not_push_queue_type = ['fetchwin','bonusStateAll', 'openBonus','bonusState'];
+
+    if(!in_array($type, $not_push_queue_type)){
         $redis->lpush("message_queue", $data);
     }
+
     minfo("got task: %s", $data);
     $response = Response::send(json_decode($data, true));
     $connection->send($response);

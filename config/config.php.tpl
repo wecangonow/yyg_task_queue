@@ -6,6 +6,7 @@ $configs = [
     "log_path"       => "/data/logs/tasks",
     "file_path"      => "/data/logs/", //存放程序生成的报表文件
     "timezone"       => "Asia/Shanghai",
+    "robot_bonus_queue" => "malaysia:bonus:robot_bonus_queue",
     "timer_interval" => 2,   // 执行任务定时器 时间间隔
     "prize"          => [
         "low_ratio"                       => 0.75,
@@ -26,8 +27,14 @@ $configs = [
         "goods_open_result_related_info"  => "malaysia:goods_open_result_related:hash#{nid}",  // nid  nper_id
     ],
     "bonus"          => [
+       //每期的所有机器人用户的是否参与抢红包的集合  score 0 1 分别代表未抢和已抢
+        "nper_robot_users" => "malaysia:bonus:nper_robot_users:sorted_set#{nid}",
+        //期待在多久时间内让所有机器人都抢红包单位小时
+        "robot_bonus_finish_time" => 24, 
         //红包大小占商品价格的比例
         "bonus_percent" => "0.05",
+        //最大红包
+        "max_bonus" => "5",
         // 保存每期每用户的购买钱数   value 为uid  score 为花费钱数，当用户多次购买该期后则score要增加
         "nper_user_pay_key"              => "malaysia:bonus:nper_user_pay:sorted_set#{nid}",
         // 保存每期返现的总金额  分配红包后该值递减（注意减到0的判断）

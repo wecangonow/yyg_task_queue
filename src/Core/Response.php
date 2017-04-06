@@ -3,6 +3,7 @@
 namespace Yyg\Core;
 
 use Yyg\Tasks\OpenBonusTask;
+use Yyg\Common\Api;
 class Response
 {
     public static $task;
@@ -27,6 +28,12 @@ class Response
                 break;
             case "openbonus":
                 $ret = self::openBonusResponse();
+                break;
+            case "bonusstate":
+                $ret = self::bonusStateResponse();
+                break;
+            case "bonusstateall":
+                $ret = self::bonusStateAllResponse();
                 break;
             default:
                 $ret = "got a message";
@@ -106,5 +113,14 @@ class Response
     public static function openBonusResponse()
     {
         return OpenBonusTask::execute(self::$task);
+    }
+
+    public static function bonusStateResponse()
+    {
+        return Api::getUserNperBonusState(self::$task);
+    }
+    public static function bonusStateAllResponse()
+    {
+        return Api::getUserBonusState(self::$task);
     }
 }

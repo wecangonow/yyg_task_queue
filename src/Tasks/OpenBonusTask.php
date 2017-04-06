@@ -222,7 +222,7 @@ class OpenBonusTask implements TaskInterface
         $exists = $redis->executeRaw(['exists', $user_info_key]);
 
         if ($exists) {
-            $user_info = $redis->executeRaw(['hgetall', $user_info_key]);
+            $user_info = $redis->hgetall($user_info_key);
         }
         else {
             $sql       = "select nick_name as name, reg_ip as ip, type from sp_users where id = $uid";

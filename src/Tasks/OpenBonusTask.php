@@ -50,7 +50,7 @@ class OpenBonusTask implements TaskInterface
 
                 $remain = $redis->executeRaw(['get', $nper_bonus_total_key]);
 
-                $num_user_can_get = rand(1, floor(min($spend, $remain) / 2));
+                $num_user_can_get = rand(1, min($remain,floor($spend / 2)));
                 $num_user_can_get = min($num_user_can_get, $configs['bonus']['max_bonus']);
 
                 if ($configs['is_debug']) {

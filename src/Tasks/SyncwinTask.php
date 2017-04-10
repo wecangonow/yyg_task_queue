@@ -28,7 +28,7 @@ class SyncwinTask implements TaskInterface
 
         if(!empty($ret)) {
 
-            if($ret['type'] != 1) {
+            if($ret['type'] != -1) {
 
                 $val = $nper_id . "_" . $ret['price'];
 

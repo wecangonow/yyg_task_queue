@@ -104,7 +104,7 @@ class InitBonusTask implements TaskInterface
     {
         global $redis, $configs;
         $queue_key = $configs['robot_bonus_queue'];
-        $first_time_gap = rand(500,5000) / 1000;
+        $first_time_gap = rand(500,3000) / 1000;
         $time = time() + $first_time_gap;
         $robot_bonus_task = ['type' => 'robotBonus', 'argv'=>['time' => $time, 'nper_id' => $nper_id]];
         $redis->lpush($queue_key, json_encode($robot_bonus_task));

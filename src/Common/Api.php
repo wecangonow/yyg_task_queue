@@ -11,7 +11,7 @@ class Api
 {
     public static function getUserBonusState(array $task)
     {
-        global $redis, $configs;
+        global $redis, $configs, $db;
 
         $uid = $task['argv']['uid'];
 
@@ -21,14 +21,25 @@ class Api
             $configs['bonus']['user_every_nper_get_bonus_state']
         );
 
-        $score = $redis->zcount($key, 0,0);
+        $npers = $redis->zrangebyscore($key, 0, 0);
+        //$npers = [5555, 4402];
+        if(count($npers) > 0) {
+            $condition = rtrim(implode(",", $npers),",");
+            $condition = "(" . $condition  . ")";
+            $sql = "select open_time from sp_nper_list where id in $condition";
+            $open_times = $db->query($sql);
+            foreach($open_times as $time) {
+                if($time['open_time'] <= time()) {
+                    return json_encode(true);
+                }
+            }
 
-        mdebug("key %s score %s", $key, $score);
-        if($score > 0) {
-            return json_encode(true);
+            return json_encode(false);
+
         } else {
             return json_encode(false);
         }
+
     }
 
     public static function getUserNperBonusState(array $task)

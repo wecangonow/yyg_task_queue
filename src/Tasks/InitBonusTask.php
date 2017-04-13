@@ -102,14 +102,17 @@ class InitBonusTask implements TaskInterface
 
     public static function initRobotFirstHunt($nper_id)
     {
-        global $redis, $configs;
+        global $redis, $configs, $db;
+        $sql = "select open_time from sp_nper_list where id = $nper_id";
+        $open_time = $db->query($sql);
+        $open_time = $open_time[0]['open_time'];
         $queue_key = $configs['robot_bonus_queue'];
         $first_time_gap = rand(500,3000) / 1000;
-        $time = time() + $first_time_gap;
+        $time = $open_time + $first_time_gap;
         $robot_bonus_task = ['type' => 'robotBonus', 'argv'=>['time' => $time, 'nper_id' => $nper_id]];
         $redis->lpush($queue_key, json_encode($robot_bonus_task));
         if ($configs['is_debug']) {
-            mdebug("%s add first robot bonus task to queue |nper_id %d ", $queue_key, $nper_id);
+            mdebug("%s add first robot bonus task to queue |nper_id %d  open_time is %d sql is %s", $queue_key, $nper_id, $open_time, $sql);
         }
     }
     public static function addUidToRobotSet($nper_id, $uid)

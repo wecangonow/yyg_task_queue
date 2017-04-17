@@ -88,7 +88,7 @@ from
                     $contents .= implode(",", $v) . "\n";
 
                 }
-                file_put_contents($configs['file_path'] . "/bonus_info.csv", $contents);
+                file_put_contents($configs['file_path'] . "/bonus_info.csv", $contents,FILE_APPEND);
             }
 
         }

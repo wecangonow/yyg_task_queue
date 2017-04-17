@@ -26,6 +26,9 @@ class BonusDataExportTask implements TaskInterface
         if (count($nper_user_pay_keys) > 0) {
             $nper_info_title = "期号,商品ID,商品名称,商品价格,中奖UID,中奖人昵称,中奖人花费,基金总额,基金剩余\n";
             file_put_contents($configs['file_path'] . "/nper_info.csv", $nper_info_title, FILE_APPEND);
+            $contents = "期号,用户ID,名字,用户类型,用户花费,红包状态,抢到时间,抢到金额\n";
+            file_put_contents($configs['file_path'] . "/bonus_info.csv", $contents,FILE_APPEND);
+
             foreach ($nper_user_pay_keys as $key) {
 
                 $nper_id = explode("#", $key)[1];
@@ -68,7 +71,6 @@ class BonusDataExportTask implements TaskInterface
                     $index++;
                 }
 
-                $contents = "期号,用户ID,名字,用户类型,用户花费,红包状态,抢到时间,抢到金额\n";
                 // 向上取整
                 $bonus_total = ceil($goods_price * $configs['bonus']['bonus_percent']);
                 $bonus_left  = $redis->executeRaw(['get', $nper_bonus_total_key]);
@@ -83,6 +85,8 @@ from
                 $nper_info = $db->row($sql);
                 $nper_string = implode(",", $nper_info) . "," . $bonus_total . "," . $bonus_left . "\n";
                 file_put_contents($configs['file_path'] . "/nper_info.csv", $nper_string, FILE_APPEND);
+
+                $contents = "";
 
                 foreach ($data as $v) {
                     $contents .= implode(",", $v) . "\n";

@@ -75,7 +75,7 @@ class BonusDataExportTask implements TaskInterface
                 $bonus_total = ceil($goods_price * $configs['bonus']['bonus_percent']);
                 $bonus_left  = $redis->executeRaw(['get', $nper_bonus_total_key]);
 
-                $sql = "select n.id, n.open_time n.pid, g.name as goods_name , g.price, n.luck_uid , u.nick_name as user_name, (select sum(money) from sp_order_list where uid = n.luck_uid and nper_id = n.id and dealed = 'true') as total_spend
+                $sql = "select n.id, n.open_time, n.pid, g.name as goods_name , g.price, n.luck_uid , u.nick_name as user_name, (select sum(money) from sp_order_list where uid = n.luck_uid and nper_id = n.id and dealed = 'true') as total_spend
 from
  sp_nper_list  n
  join sp_goods g on g.id = n.pid

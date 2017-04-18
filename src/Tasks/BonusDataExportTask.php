@@ -24,7 +24,7 @@ class BonusDataExportTask implements TaskInterface
         file_put_contents($configs['file_path'] . "/bonus_info.csv", "");
 
         if (count($nper_user_pay_keys) > 0) {
-            $nper_info_title = "期号,商品ID,商品名称,商品价格,中奖UID,中奖人昵称,中奖人花费,基金总额,基金剩余\n";
+            $nper_info_title = "期号,开奖时间,商品ID,商品名称,商品价格,中奖UID,中奖人昵称,中奖人花费,基金总额,基金剩余\n";
             file_put_contents($configs['file_path'] . "/nper_info.csv", $nper_info_title, FILE_APPEND);
             $contents = "期号,用户ID,名字,用户类型,用户花费,红包状态,抢到时间,抢到金额\n";
             file_put_contents($configs['file_path'] . "/bonus_info.csv", $contents,FILE_APPEND);
@@ -61,7 +61,7 @@ class BonusDataExportTask implements TaskInterface
                     $bonus_info = self::getUserBonusInfo($nper_id, $uid);
                     if ($bonus_info) {
 
-                        $data[$index]['time']   = $bonus_info['time'];
+                        $data[$index]['time']   = date("Y-m-d H:i:s",$bonus_info['time']);
                         $data[$index]['amount'] = $bonus_info['amount'];
                     }
                     else {
@@ -75,7 +75,7 @@ class BonusDataExportTask implements TaskInterface
                 $bonus_total = ceil($goods_price * $configs['bonus']['bonus_percent']);
                 $bonus_left  = $redis->executeRaw(['get', $nper_bonus_total_key]);
 
-                $sql = "select n.id, n.pid, g.name as goods_name , g.price, n.luck_uid , u.nick_name as user_name, (select sum(money) from sp_order_list where uid = n.luck_uid and nper_id = n.id and dealed = 'true') as total_spend
+                $sql = "select n.id, n.open_time n.pid, g.name as goods_name , g.price, n.luck_uid , u.nick_name as user_name, (select sum(money) from sp_order_list where uid = n.luck_uid and nper_id = n.id and dealed = 'true') as total_spend
 from
  sp_nper_list  n
  join sp_goods g on g.id = n.pid
@@ -83,6 +83,7 @@ from
  where n.id = $nper_id";
 
                 $nper_info = $db->row($sql);
+                $nper_info['open_time'] = date("Y-m-d H:i:s", $nper_info['open_time']);
                 $nper_string = implode(",", $nper_info) . "," . $bonus_total . "," . $bonus_left . "\n";
                 file_put_contents($configs['file_path'] . "/nper_info.csv", $nper_string, FILE_APPEND);
 

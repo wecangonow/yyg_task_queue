@@ -156,6 +156,8 @@ class PrizeTask implements TaskInterface
 
         $ret = 0;
 
+        $exists = false;
+
         if (!$exists) {
 
             $sql = "select g.price, r.nper_id from sp_win_record r join sp_goods g on r.goods_id = g.id   where r.luck_uid = $uid";

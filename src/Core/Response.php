@@ -72,13 +72,36 @@ class Response
         $nper_id = self::$task['argv']['nper_id'];
         $gid     = self::$task['argv']['gid'];
 
+        $sql = "select uid, sum(money) as total from sp_order_list where nper_id = $nper_id and dealed = 'true' group by uid";
+
+        $buy_records = $db->query($sql);
+
+        $new_records = [];
+        foreach($buy_records as $v) {
+            $new_records[$v['uid']] = $v['total'];
+        }
+
         $price = $db->row("select price from `sp_goods` where id = $gid")['price'];
 
         $key = str_replace("{nid}", $nper_id, $configs['prize']['nper_prize_key_scheme']);
         
         $users = $redis->executeRaw(['zrevrangebyscore', $key, "+inf", $price]);
 
-        $winner_id = $users[array_rand($users, 1)];
+        //$keys = array_keys($new_records);
+        //$users = array_slice($keys, round(count($keys) / 2));
+
+        $total_candidates = [];
+
+        foreach($users as $uid) {
+            $total = (int)$new_records[$uid];
+            for($i = 0; $i < $total; $i++) {
+                $total_candidates[] = $uid;
+            }
+        }
+
+        shuffle($total_candidates);
+        $winner_id = $total_candidates[array_rand($total_candidates, 1)];
+
 
         $score = $redis->executeRaw(['zscore', $key, $winner_id]);
 

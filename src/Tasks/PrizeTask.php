@@ -70,6 +70,13 @@ class PrizeTask implements TaskInterface
 
                 self::$ratio = "loose_ratio";
 
+                if ($configs['is_debug']) {
+                    mdebug(
+                        "user %d : order_id = %d | user_pay_life = %s, user_pay_period = %s, max_prize = %s, user_win_life = %s, user_roi = %s, user_ratio = %s",
+                        $uid, $order_id, self::$user_pay_life, self::$user_pay_period, self::$max_prize, 0, 0, self::$ratio
+                    );
+                }
+
             }
             else {
 
@@ -108,14 +115,15 @@ class PrizeTask implements TaskInterface
 
                 }
 
+                if ($configs['is_debug']) {
+                    mdebug(
+                        "user %d : order_id = %d | user_pay_life = %s, user_pay_period = %s, max_prize = %s, user_win_life = %s, user_roi = %s, user_ratio = %s",
+                        $uid, $order_id, self::$user_pay_life, self::$user_pay_period, self::$max_prize, self::$user_win_life, self::$user_roi, self::$ratio
+                    );
+                }
+
             }
 
-            if ($configs['is_debug']) {
-                mdebug(
-                    "user %d : order_id = %d | user_pay_life = %s, user_pay_period = %s, max_prize = %s, user_win_life = %s, user_roi = %s, user_ratio = %s",
-                    $uid, $order_id, self::$user_pay_life, self::$user_pay_period, self::$max_prize, self::$user_win_life, self::$user_roi, self::$ratio
-                );
-            }
 
         }
         else {

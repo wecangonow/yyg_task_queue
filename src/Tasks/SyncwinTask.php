@@ -53,7 +53,7 @@ class SyncwinTask implements TaskInterface
 
         ExecutionTime::End();
 
-        minfo("%s::execute spend %s ", get_called_class(), ExecutionTime::ExportTime());
+        minfo("%s::execute spend %s data is %s ", get_called_class(), ExecutionTime::ExportTime(), json_encode($task));
     }
 
 

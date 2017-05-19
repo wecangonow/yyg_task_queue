@@ -18,7 +18,7 @@ class PrizeTask implements TaskInterface
         ExecutionTime::Start();
 
         global $db, $configs;
-        $order_id = trim($task['argv']['order_id']);
+        $order_id = strval(trim($task['argv']['order_id']));
         if(!$order_id){
             return;
         }

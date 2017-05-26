@@ -3,6 +3,5 @@ composer.lock
 .idea/*
 logs/*
 *.csv
-*.php
 config/*.php
 !bootstrap.php

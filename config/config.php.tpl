@@ -64,7 +64,15 @@ $configs = [
         "redis" => [
             "host" => "127.0.0.1",
             "port" => 6379,
+        ]
+        "android_push" => [
+            "key" => "AIzaSyAZo3qXaQYEFgxsNfmi2uNp0UYOYTZxeTU",
+            "gcm_url" => "https://gcm-http.googleapis.com/gcm/send",
+            "tpl" => [
+                "" => ""
+            ]
         ],
+
         "email" => [
             "host"     => "email-smtp.us-east-1.amazonaws.com",
             "port"     => 587,
@@ -84,6 +92,29 @@ $configs = [
                     "payment"  => [
                         "subject" => "恭喜您支付成功",
                         "body"    => "您已经在{{pay_time}}付款给1RM HUNT。这是一封系统自动回复的邮件.",
+                        "is_html" => false,
+                    ],
+                    "receipt"  => [
+                        "subject" => "别错过属于您的20个免费 Lucky Coins",
+                        "body"    => <<<RECEIPT
+                                再次恭喜您赢得了{{good_name}},您无疑是非常幸运的,而且您的幸运还在继续！请赶快到 1RM HUNT 晒出您的奖品,我们将赠送您10个免费的 Lucky Coins.
+                                如果您将中奖的信息分享到您的个人 Facebook 主页并将分享截图及您的 1RM HUNT ID 通过 1RM HUNT 的 Facebook 主页（www.facebook.com/1rmhunt） 发送给我们，我们将再赠送您10个免费的 Lucky Coins!!
+                        分享会使您的幸运加倍，赶快行动吧
+                        晒单教程图
+                        分享到Facebook 的按钮
+                        我们强烈推荐您关注 1RM HUNT 的 Facebook 主页（www.facebook.com/1rmhunt）以便获取最新的优惠和活动信息!
+                        RECEIPT
+                        ,
+                        "is_html" => false,
+                    ],
+                    "shipped"  => [
+                        "subject" => "您的奖品已由 1RM HUNT 安排发货",
+                        "body"    => <<<SHIPPED
+                                您的奖品 {{good_name}} 已经发货，预计1-2周内送到您的手中。请您在签收前务必仔细检查奖品，如有质量问题请拒绝签收。如签收后发现奖品有质量问题请您自行联系卖家协商解决, 1RM HUNT 会尽量为您提供帮助但无义务退换奖品。
+                                请不要忘记收到奖品后来 1RM HUNT 和 Facebook 晒单,这样会再得到20个免费的 Lucky Coins!
+                                我们强烈推荐您关注 1RM HUNT 的 Facebook 主页（www.facebook.com/1rmhunt）以便获取最新的优惠和活动信息!
+                        SHIPPED
+                        ,
                         "is_html" => false,
                     ],
                 ]

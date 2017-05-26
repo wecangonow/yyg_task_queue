@@ -3,9 +3,6 @@ composer.lock
 .idea/*
 logs/*
 *.csv
+*.php
 config/*.php
-push*.php
-server.php
-url_arr.php
 !bootstrap.php
-config/*.yml

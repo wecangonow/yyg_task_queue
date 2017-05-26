@@ -27,7 +27,9 @@ class OpenBonusTask implements TaskInterface
 
         $ret = ['bonus_records' => [], 'is_win' => false, 'win_amount' => 0];
 
-        if ($spend && $spend > 1) {
+        $spend_condition = 1 * $configs['bonus_spend_ratio'];
+
+        if ($spend && $spend > $spend_condition) {
 
             $user_nper_get_bonus_record = str_replace(
                 "{uid}",
@@ -50,7 +52,7 @@ class OpenBonusTask implements TaskInterface
 
                 $remain = $redis->executeRaw(['get', $nper_bonus_total_key]);
 
-                $num_user_can_get = rand(1, min($remain,floor($spend / 2)));
+                $num_user_can_get = rand($configs['bonus']['min_bonus'], min($remain,floor($spend / 2)));
                 $num_user_can_get = min($num_user_can_get, $configs['bonus']['max_bonus']);
 
                 if ($configs['is_debug']) {

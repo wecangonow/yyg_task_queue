@@ -52,7 +52,9 @@ $task_worker->onWorkerStart = function ($task_worker) {
                     $task_arr   = json_decode($message, true);
                     $task_type  = $task_arr['type'];
                     $task_class = "Yyg\\Tasks\\" . ucfirst($task_type) . "Task";
-                    $task_class::execute($task_arr);
+                    if(class_exists($task_class)) {
+                        $task_class::execute($task_arr);
+                    }
                 }
                 else {
                     mdebug("worker id -- %d : task queue is empty", $task_worker->id);
@@ -76,7 +78,9 @@ $task_worker->onWorkerStart = function ($task_worker) {
                     $task_arr   = json_decode($message, true);
                     $task_type  = $task_arr['type'];
                     $task_class = "Yyg\\Tasks\\" . ucfirst($task_type) . "Task";
-                    $task_class::execute($task_arr);
+                    if(class_exists($task_class)) {
+                        $task_class::execute($task_arr);
+                    }
                 }
                 else {
                     mdebug("worker id -- %d : robot bonus queue is empty", $task_worker->id);

@@ -12,9 +12,12 @@ require_once PROJECT_DIR . '/vendor/phpmailer/phpmailer/PHPMailerAutoload.php';
 
 class EmailTask implements TaskInterface
 {
-    public static function send_email($email_config, $real_email_content, $task)
+    public static function send_email($real_email_content, $task)
     {
-        $mail = new \PHPMailer();
+        global $configs;
+
+        $email_config = $configs['services']['email'];
+        $mail         = new \PHPMailer();
 
         $mail->isSMTP();
 
@@ -23,7 +26,7 @@ class EmailTask implements TaskInterface
         $mail->SMTPAuth  = $email_config['auth'];
         $mail->Username  = $email_config['username'];
         $mail->Password  = $email_config['password'];
-        $mail->SMTPDebug = 2;
+        //$mail->SMTPDebug = 2;
         $mail->setFrom($email_config['info']['sender'], $email_config['info']['sender_info']);
         $mail->addReplyTo($email_config['info']['receiver']);
         $mail->CharSet = 'UTF-8';
@@ -31,7 +34,11 @@ class EmailTask implements TaskInterface
         $mail->Subject = $real_email_content['subject'];
         $mail->Body    = $real_email_content['body'];
 
-        $mail->addBCC($real_email_content['email']);
+        // 上线后需要移除
+        $email = $real_email_content['email'];
+        $email = "haozhongzhi@brotsoft.com";
+
+        $mail->addBCC($email);
 
         if (!$mail->send()) {
             merror("Mailer Error: %s ", $mail->ErrorInfo);
@@ -60,6 +67,7 @@ class EmailTask implements TaskInterface
         $real_email_content['body']    = $email_config['info']['tpl'][$category]['body'];
         $real_email_content['is_html'] = $email_config['info']['tpl'][$category]['is_html'];
 
+        $continue = true;
         switch ($category) {
             case "register":
                 $real_email_content['email'] = $task['argv']['email'];
@@ -72,28 +80,86 @@ class EmailTask implements TaskInterface
                 $real_email_content['body']  = str_replace("{{pay_time}}", $pay_time, $real_email_content['body']);
                 break;
             case "receipt":
-                $uid           = $task['argv']['uid'];
-                $win_record_id = $task['argv']['win_record_id'];
+                $uid                         = $task['argv']['uid'];
+                $win_record_id               = $task['argv']['win_record_id'];
                 $real_email_content['email'] = self::get_email_by_id($uid);
-                $good_name = self::get_good_name_by_win_record_id($win_record_id);
+                $good_name                   = self::get_good_name_by_win_record_id($win_record_id);
                 $real_email_content['body']  = str_replace("{{good_name}}", $good_name, $real_email_content['body']);
                 break;
             case "shipped":
-                $real_email_content['email'] = $task['argv']['email'];
-                $win_record_id = $task['argv']['win_record_id'];
-                $good_name = self::get_good_name_by_win_record_id($win_record_id);
+                $win_record_id               = $task['argv']['win_record_id'];
+                $real_email_content['email'] = self::get_email_with_win_record_id($win_record_id);
+                $good_name                   = self::get_good_name_by_win_record_id($win_record_id);
                 $real_email_content['body']  = str_replace("{{good_name}}", $good_name, $real_email_content['body']);
+                break;
+            case "show_order":
+                $show_order_ids = trim($task['argv']['show_order_ids'],',');
+                self::show_order_email_and_notify($show_order_ids, $real_email_content, $task);
+                $continue = false;
                 break;
 
         }
 
-        if (!isset($real_email_content['email'])) {
-            mdebug("can not find user's email address : request data is %s", json_encode($task));
 
-            return;
+        if($continue) {
+
+            if (is_null($real_email_content['email'])) {
+                mdebug("can not find user's email address : request data is %s", json_encode($task));
+
+                return;
+            }
+            self::send_email($real_email_content, $task);
+        }
+    }
+
+    public static function get_email_with_win_record_id($win_record_id)
+    {
+        global $db;
+        $sql = "select email from sp_bind_email where uid = (select luck_uid  from sp_win_record where id = $win_record_id)";
+        $info = $db->row($sql);
+        if(isset($info['email'])) {
+            return  $info['email'];
+        } else {
+            return null;
+        }
+    }
+
+    public static function show_order_email_and_notify($show_order_ids, $real_email_content, $task)
+    {
+        global $db, $configs;
+
+        $sql  = "select reg_token from sp_reg_token where (`group` = 'android' or `group` is null) and uid in (select uid from sp_show_order where id in ($show_order_ids))";
+        $info = $db->query($sql);
+
+        if (count($info) > 0) {
+
+            $title        = $configs['services']['android_push']['tpl']['show_order']['title'];
+            $message      = $configs['services']['android_push']['tpl']['show_order']['message'];
+            $send_message = ['title' => $title, 'message' => $message];
+
+            foreach ($info as $v) {
+                $tokens[] = $v['reg_token'];
+            }
+
+            NoticeTask::send_gcm_notify($tokens, $send_message);
         }
 
-        self::send_email($email_config, $real_email_content, $task);
+        $sql  = "select `email` from sp_users where uid in (select uid from sp_show_order where id in ($show_order_ids))";
+        $info = $db->query($sql);
+
+        foreach ($info as $v) {
+            $email = !is_null($v['email']) ? $v['email'] : null;
+            if ($email == null) {
+                continue;
+            }
+            else {
+                $real_email_content['email'] = $email;
+                self::send_email($real_email_content, $task);
+            }
+        }
+
+        return;
+
     }
 
     public static function get_good_name_by_win_record_id($win_record_id)
@@ -123,11 +189,10 @@ class EmailTask implements TaskInterface
     {
         global $db;
         $email_info = $db->row(
-            "select email, email_3rd from sp_users where id = $id"
+            "select email  from sp_bind_email where uid = $id"
         );
 
-        return !is_null($email_info['email']) ? $email_info['email'] :
-            (!is_null($email_info['email_3rd']) ? $email_info['email_3rd'] : null);
+        return !is_null($email_info['email']) ? $email_info['email'] : null;
 
     }
 }

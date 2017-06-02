@@ -69,7 +69,10 @@ $configs = [
             "key" => "AIzaSyAZo3qXaQYEFgxsNfmi2uNp0UYOYTZxeTU",
             "gcm_url" => "https://gcm-http.googleapis.com/gcm/send",
             "tpl" => [
-                "" => ""
+                "nocheckin" => [
+                    "title" => "很久不见,甚是想念",
+                    "message" => "我们有新的商品上架,欢迎回来看看",
+                ]
             ]
         ],
 
@@ -87,7 +90,7 @@ $configs = [
                     "register" => [
                         "subject" => "恭喜您已在 1RM HUNT 成功注册",
                         "body"    => "恭喜您已在 1RM HUNT 成功注册",
-                        "is_html" => fasle,
+                        "is_html" => false,
                     ],
                     "payment"  => [
                         "subject" => "恭喜您支付成功",

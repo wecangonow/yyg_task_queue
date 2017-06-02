@@ -44,6 +44,7 @@ class EmailTask implements TaskInterface
             merror("Mailer Error: %s ", $mail->ErrorInfo);
         }
         else {
+            self::cache_email_times_in_three_days($email);
             minfo(
                 "Task type %s category %s  successfully to %s ",
                 $task['type'],
@@ -108,6 +109,7 @@ class EmailTask implements TaskInterface
 
                 return;
             }
+            var_dump($real_email_content);
             self::send_email($real_email_content, $task);
         }
     }
@@ -138,7 +140,9 @@ class EmailTask implements TaskInterface
             $send_message = ['title' => $title, 'message' => $message];
 
             foreach ($info as $v) {
-                $tokens[] = $v['reg_token'];
+                if(NoticeTask::verify_limit($v['reg_token'])){
+                    $tokens[] = $v['reg_token'];
+                }
             }
 
             NoticeTask::send_gcm_notify($tokens, $send_message);
@@ -193,6 +197,21 @@ class EmailTask implements TaskInterface
         );
 
         return !is_null($email_info['email']) ? $email_info['email'] : null;
+
+    }
+
+    public static function cache_email_times_in_three_days($email)
+    {
+        global $redis;
+        $prefix = "email_count_in_three_days:#";
+        $key = $prefix . trim($email);
+        if(!$redis->exists($key)){
+            $redis->set($key,1);
+            $redis->expire($key, 3600 * 24 * 3);
+        } else {
+            $redis->incr($key);
+        }
+        mdebug("%s value is %d", $key, $redis->get($key));
 
     }
 }

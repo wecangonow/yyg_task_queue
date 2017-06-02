@@ -13,6 +13,15 @@ class NoticeTask implements TaskInterface
         $tokens   = [];
         $continue = true;
         switch ($category) {
+
+            case "nocheckin":
+                $tokens = $task['argv']['tokens'];
+                foreach ($tokens as $k => $v) {
+                    if(!self::verify_limit($v)) {
+                        unset($tokens[$k]);
+                    }
+                }
+                break;
             case "show_participate":
                 $show_order_ids = trim($task['argv']['show_order_ids'], ',');
                 $tokens         = self::get_token_with_show_order_ids($show_order_ids);
@@ -42,6 +51,7 @@ class NoticeTask implements TaskInterface
         global $db, $configs;
 
         $sql  = "select o.uid, o.luck_status, t.reg_token from sp_order_list o join sp_reg_token t on o.uid = t.uid where nper_id = $nper_id and dealed='true'";
+    
         $rows = $db->query($sql);
         if (count($rows) > 0) {
             foreach($rows as $row) {
@@ -52,7 +62,9 @@ class NoticeTask implements TaskInterface
                     $send_message = ['title' => $title, 'message' => $message];
                     self::send_gcm_notify($token, $send_message, $task);
                 } else {
-                    $tokens[] = [$row['reg_token']];
+                    if(self::verify_limit($row['reg_toekn'])) {
+                        $tokens[] = $row['reg_token'];
+                    }
                 }
             }
 
@@ -61,6 +73,19 @@ class NoticeTask implements TaskInterface
             $send_message = ['title' => $title, 'message' => $message];
 
             self::send_gcm_notify($tokens, $send_message, $task);
+        }
+    }
+
+    public static function verify_limit($token)
+    {
+        global $redis;
+        $prefix = "notice_count:" . date("Ymd",time()) . "#";
+        $key = $prefix . substr($token, 0, 8);
+        $have_send = $redis->get($key);
+        if($have_send >= 1){
+            return false;
+        } else {
+            return true;
         }
     }
 
@@ -95,7 +120,9 @@ GETSQL;
         $ret = [];
         if (count($reg_tokens) > 0) {
             foreach ($reg_tokens as $v) {
-                $ret[] = $v['reg_token'];
+                if(self::verify_limit($v['reg_token'])) {
+                    $ret[] = $v['reg_token'];
+                }
             }
         }
 
@@ -110,16 +137,17 @@ GETSQL;
         $key     = $configs['services']['android_push']['key'];
         $gcm_url = $configs['services']['android_push']['gcm_url'];
 
-        if (count($tokens) <= 0) {
-            return;
-        }
-
         $tokens = [
             "fnoIgCJeBrA:APA91bFgVW0wdMyxKXNbaJMUB11BSmN964jdXaJqPaxbpfR8j8QhZklUl4eEwA-zjgKuiijXLCagj0t07z0Dwze2bDAjSqagmlNJZlnFMLhBICM1aiZHyWsW2W5wQ8mtDt5dh5PfQ_H_",
             "enUcQvCRH5Y:APA91bE_2aqdNYVQP6THG9iMfBAF3qmmSmax1zKvgLKGyX6uVUjzl6QPYSi27nU-aWtfXmLbeZyU0Rx7I8JY8i-r8usQ61OAe7kVCwUOJiY-kABVcvuIceVmTnl4_EWIj2IjsRM4JT7T",
         ];
 
-        self::verify_send_limit($tokens, $task);
+        if (count($tokens) <= 0) {
+            return;
+        }
+
+
+        self::cache_notice_times_per_day($tokens);
 
         $post_data = [
             'registration_ids' => $tokens,
@@ -142,30 +170,22 @@ GETSQL;
 
     }
 
-    public static function verify_send_limit($tokens, $task)
+    public static function cache_notice_times_per_day($tokens)
     {
         global $redis, $configs;
         if(count($tokens) > 0) {
-            $category = $task['argv']['category'];
-            $status   = $configs['services']['android_push']['tpl'][$category]['limit']['status'];
-            $limit    = $configs['services']['android_push']['tpl'][$category]['limit']['times'];
-            $prefix = "malaysia:notice_count:" . date("Ymd",time()) . "#";
+            $prefix = "notice_count:" . date("Ymd",time()) . "#";
             foreach($tokens as $k => $v) {
                 $key = $prefix . substr($v, 0, 8);
                 if(!$redis->exists($key)){
-                    $redis->set($key,0);
+                    $redis->set($key,1);
+                    $redis->expire($key, 3600 * 24);
                 } else {
-                    $count = $redis->get($key);
-                    if($status && $count >= $limit) {
-                        unset($tokens[$k]);
-                    }
                     $redis->incr($key);
                 }
+                mdebug("%s value is %d", $key, $redis->get($key));
             }
-            return $tokens;
 
-        } else {
-            return [];
         }
     }
 }

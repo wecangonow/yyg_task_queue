@@ -20,9 +20,6 @@ class Upload_imageTask implements TaskInterface
         $img_type  = $task['argv']['img_type'];
         $save_path = $task['argv']['save_path'];
 
-        $body = file_get_contents($img_path);
-
-
         $bucket                = $configs['services']['aws']['bucket'];
         $credentials['key']    = $configs['services']['aws']['access_key'];
         $credentials['secret'] = $configs['services']['aws']['secret_key'];
@@ -36,11 +33,12 @@ class Upload_imageTask implements TaskInterface
                 [
                     'Bucket'      => $bucket,
                     'Key'         => $save_path,
-                    'Body'        => $body,
-                    'Acl'         => 'public-read',
+                    'Body'        => file_get_contents($img_path),
+                    'ACL'         => 'public-read',
                     'ContentType' => $img_type,
                 ]
             );
+
 
             if($result && $result['@metadata']['statusCode'] == 200) {
                 $up_time = time();

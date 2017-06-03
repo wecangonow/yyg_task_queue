@@ -25,13 +25,13 @@ class PrizeTask implements TaskInterface
 
         // 根据订单号  获取用户 期数信息
 
-        $sql = "select l.paid,l.order_id as orderid, unix_timestamp(l.create_time) as create_time, l.description as pay_type, o.uid, true as income  from `log_notify` l join `sp_order_list_parent` o  on o.order_id = l.order_id   where l.order_id = $order_id and l.state = 'completed'";
+        $sql = "select l.paid,l.order_id as orderid, unix_timestamp(l.create_time) as create_time, l.description as pay_type, o.uid, true as income  from `log_notify` l join `sp_order_list_parent` o  on o.order_id = l.order_id   where l.order_id = '$order_id' and l.state = 'completed'";
 
 
         $ret = $db->row($sql);
 
         if (empty($ret)) {
-            $sql = "select uid, create_time, bus_type as pay_type, false as income from `sp_order_list_parent` where order_id = $order_id";
+            $sql = "select uid, create_time, bus_type as pay_type, false as income from `sp_order_list_parent` where order_id = '$order_id'";
             $ret = $db->row($sql);
         }
 
@@ -131,7 +131,7 @@ class PrizeTask implements TaskInterface
             self::$max_prize = $configs['prize']['rt_magic_prize'];
         }
 
-        $sql = "select nper_id from `sp_order_list` where pid in (select id from `sp_order_list_parent` where order_id = $order_id) and (index_end - index_start + 1) > 0 and bus_type = 'buy'";
+        $sql = "select nper_id from `sp_order_list` where pid in (select id from `sp_order_list_parent` where order_id = '$order_id') and (index_end - index_start + 1) > 0 and bus_type = 'buy'";
 
         $npers = $db->query($sql);
 

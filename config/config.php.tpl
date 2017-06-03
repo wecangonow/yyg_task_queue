@@ -53,7 +53,13 @@ $configs = [
         "user_info"                           => "malaysia:bonus:user_info:hash#{uid}",
     ],
     "services"          => [
-        "mysql" => [
+        "aws"          => [
+            "domain"     => "",
+            "bucket"     => "",
+            "access_key" => "",
+            "secret_key" => "",
+        ],
+        "mysql"        => [
             "host"     => "127.0.0.1",
             "port"     => 3306,
             "user"     => "root",
@@ -61,22 +67,71 @@ $configs = [
             "dbname"   => "yyg",
             "charset"  => "utf8",
         ],
-        "redis" => [
+        "redis"        => [
             "host" => "127.0.0.1",
             "port" => 6379,
-        ]
-        "android_push" => [
-            "key" => "AIzaSyAZo3qXaQYEFgxsNfmi2uNp0UYOYTZxeTU",
-            "gcm_url" => "https://gcm-http.googleapis.com/gcm/send",
-            "tpl" => [
-                "nocheckin" => [
-                    "title" => "很久不见,甚是想念",
-                    "message" => "我们有新的商品上架,欢迎回来看看",
-                ]
-            ]
         ],
-
-        "email" => [
+        "android_push" => [
+            "key"     => "AIzaSyAZo3qXaQYEFgxsNfmi2uNp0UYOYTZxeTU",
+            "gcm_url" => "https://gcm-http.googleapis.com/gcm/send",
+            "tpl"     => [
+                "nocheckin"        => [
+                    "title"   => "很久不见,甚是想念",
+                    "message" => "我们有新的商品上架,欢迎回来看看",
+                ],
+                "show_order"       => [
+                    'title'   => '免费的 Lucky Coins 已经充值到您的账户',
+                    'message' => '晒单为您赢得了免费的 Lucky Coins ! 快去夺宝吧!',
+                    'limit'   => [
+                        'status' => false,
+                        'times'  => 0,
+                    ],
+                ],
+                "show_participate" => [
+                    'title'   => '您的参与有晒单了',
+                    'message' => '看看谁赢了我的奖品',
+                    'limit'   => [
+                        'status' => true,
+                        'times'  => 2,
+                    ],
+                ],
+                "shipped"          => [
+                    'title'   => '您的奖品已安排发货',
+                    'message' => '您的奖品预计1-2周内送到您的手中',
+                    'limit'   => [
+                        'status' => false,
+                        'times'  => 0,
+                    ],
+                ],
+                "no_login_in"      => [
+                    'title'   => '您的奖品已安排发货',
+                    'message' => '您的奖品预计1-2周内送到您的手中',
+                    'limit'   => [
+                        'status' => true,
+                        'times'  => 2,
+                    ],
+                ],
+                "winning_bonus"    => [
+                    'win'  => [
+                        'title'   => '恭喜您中奖了',
+                        'message' => '请赶快登录 1RM HUNT 填写收货地址',
+                        'limit'   => [
+                            'status' => false,
+                            'times'  => 0,
+                        ],
+                    ],
+                    'fail' => [
+                        'title'   => '您有一笔基金未领取!',
+                        'message' => '基金总量有限，先到先得，请抓紧时间.',
+                        'limit'   => [
+                            'status' => true,
+                            'times'  => 2,
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        "email"        => [
             "host"     => "email-smtp.us-east-1.amazonaws.com",
             "port"     => 587,
             "auth"     => true,
@@ -106,7 +161,7 @@ $configs = [
                         晒单教程图
                         分享到Facebook 的按钮
                         我们强烈推荐您关注 1RM HUNT 的 Facebook 主页（www.facebook.com/1rmhunt）以便获取最新的优惠和活动信息!
-                        RECEIPT
+RECEIPT
                         ,
                         "is_html" => false,
                     ],
@@ -116,8 +171,17 @@ $configs = [
                                 您的奖品 {{good_name}} 已经发货，预计1-2周内送到您的手中。请您在签收前务必仔细检查奖品，如有质量问题请拒绝签收。如签收后发现奖品有质量问题请您自行联系卖家协商解决, 1RM HUNT 会尽量为您提供帮助但无义务退换奖品。
                                 请不要忘记收到奖品后来 1RM HUNT 和 Facebook 晒单,这样会再得到20个免费的 Lucky Coins!
                                 我们强烈推荐您关注 1RM HUNT 的 Facebook 主页（www.facebook.com/1rmhunt）以便获取最新的优惠和活动信息!
-                        SHIPPED
+SHIPPED
                         ,
+                        "is_html" => false,
+                    ],
+                    "show_order" => [
+                        "subject" => "免费的 Lucky Coins 已经充值到您的账户",
+                        "body"    => <<<SHOW_ORDER
+                                感谢您晒出了您的奖品让更多的人得以分享您的幸运，我们相信这一定会让您的幸运加倍！ 免费的Lucky Coins 已经充值到您的账户，相信幸运的您将用它赢得任何您想要的奖品！赶快去夺宝吧！
+                                我们强烈推荐您关注 1RM HUNT 的 Facebook 主页（www.facebook.com/1rmhunt）以便获取最新的优惠和活动信息！
+SHOW_ORDER
+,
                         "is_html" => false,
                     ],
                 ]

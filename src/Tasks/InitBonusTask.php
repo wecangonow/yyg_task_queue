@@ -40,6 +40,7 @@ class InitBonusTask implements TaskInterface
 
         if (count($nper_info) > 0) {
             $goods_price = 0;
+            $spend_condition = 1 * $configs['bonus_spend_ratio'];
             foreach ($nper_info as $info) {
 
                 $uid                        = $info['uid'];
@@ -58,7 +59,7 @@ class InitBonusTask implements TaskInterface
                 $redis->executeRaw(['zadd', $nper_user_pay_key, $spend_amount, $uid]);
 
                 //初始化用户的该期抢红包状态为0
-                if ($spend_amount > 1) {
+                if ($spend_amount > $spend_condition) {
                     $redis->executeRaw(['zadd', $user_nper_get_bonus_record, 0, $nper_id]);
                 }
 
@@ -72,7 +73,7 @@ class InitBonusTask implements TaskInterface
                         $uid,
                         $spend_amount
                     );
-                    if ($spend_amount > 1) {
+                    if ($spend_amount > $spend_condition) {
                         mdebug(
                             "%s init user %d nper_id %d set bonus state to 0",
                             $user_nper_get_bonus_record,

@@ -115,8 +115,8 @@ class Response
 
     public static function emailResponse()
     {
-        $email_count = count(self::$task['argv']['email_address']);
-        $msg         = "server put $email_count email address to queue";
+        //$email_count = count(self::$task['argv']['email_address']);
+        $msg         = "server put an email address to queue";
 
         return $msg;
     }

@@ -55,9 +55,10 @@ $task_worker->onWorkerStart = function ($task_worker) {
                     if(class_exists($task_class)) {
                         $task_class::execute($task_arr);
                     }
+
                 }
                 else {
-                    mdebug("worker id -- %d : task queue is empty", $task_worker->id);
+                    //mdebug("worker id -- %d : task queue is empty", $task_worker->id);
                 }
             }
         );
@@ -83,7 +84,7 @@ $task_worker->onWorkerStart = function ($task_worker) {
                     }
                 }
                 else {
-                    mdebug("worker id -- %d : robot bonus queue is empty", $task_worker->id);
+                    //mdebug("worker id -- %d : robot bonus queue is empty", $task_worker->id);
                 }
             }
         );

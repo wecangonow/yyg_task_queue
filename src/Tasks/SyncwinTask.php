@@ -9,6 +9,9 @@
 namespace Yyg\Tasks;
 
 use Yyg\Core\ExecutionTime;
+use \Workerman\Lib\Timer;
+use \Workerman\Events\Select;
+use \Workerman\Autoloader;
 
 class SyncwinTask implements TaskInterface
 {
@@ -40,6 +43,15 @@ class SyncwinTask implements TaskInterface
                     minfo("uid %s win nper %d added %d to user_win_life", $ret['luck_uid'], $nper_id, $ret['price']);
                 }
 
+                // 真人中奖用户注册一个4天不填地址发邮件和app通知任务
+                $run_time = time() + 3600 * 24 * 4;
+                $run_time = time() + 5;
+                $check_confirm_address = ['type' => 'notice', 'argv' => ['category' => 'confirm_address', 'run_time' => $run_time, 'nper_id' => $nper_id, 'luck_uid' => $ret['luck_uid']]];
+                $task_data = json_encode($check_confirm_address);
+                $redis->lpush("slow_queue", $task_data);
+                minfo("got task: %s", $task_data);
+
+
             } else {
                 minfo("uid %s is a robot do not update nper_id %d - price %d user win life", $ret['luck_uid'], $nper_id, $ret['price']);
             }
@@ -51,10 +63,12 @@ class SyncwinTask implements TaskInterface
 
         }
 
+
         ExecutionTime::End();
 
         minfo("%s::execute spend %s data is %s ", get_called_class(), ExecutionTime::ExportTime(), json_encode($task));
     }
+
 
 
 }

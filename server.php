@@ -8,7 +8,7 @@ use Workerman\Lib\Timer;
 use Oasis\Mlib\Logging\LocalFileHandler;
 
 $task_worker        = new Worker('Text://0.0.0.0:6161');
-$task_worker->count = 3;
+$task_worker->count = 10;
 $task_worker->name  = 'TaskWorker';
 
 Worker::$logFile = '/tmp/workerman.log';
@@ -36,7 +36,9 @@ $task_worker->onWorkerStart = function ($task_worker) {
 
     $time_interval = $configs['timer_interval'];
 
-    if ($task_worker->id == 0) {
+    $worker_ids = [0,4,5,6,7];
+
+    if (in_array($task_worker->id, $worker_ids)) {
 
         Timer::add(
             $time_interval,
@@ -58,7 +60,7 @@ $task_worker->onWorkerStart = function ($task_worker) {
 
                 }
                 else {
-                    //mdebug("worker id -- %d : task queue is empty", $task_worker->id);
+                    mdebug("worker id -- %d : task queue is empty", $task_worker->id);
                 }
             }
         );
@@ -84,7 +86,34 @@ $task_worker->onWorkerStart = function ($task_worker) {
                     }
                 }
                 else {
-                    //mdebug("worker id -- %d : robot bonus queue is empty", $task_worker->id);
+                    mdebug("worker id -- %d : robot bonus queue is empty", $task_worker->id);
+                }
+            }
+        );
+    }
+
+    if ($task_worker->id == 2 || $task_worker->id == 3 ) {
+
+        Timer::add(
+            5,
+            function () use ($task_worker) {
+
+                global $configs, $redis;
+
+                (new LocalFileHandler($configs['log_path']))->install();
+
+                $message = $redis->rpop('slow_queue');
+
+                if ($message != "") {
+                    $task_arr   = json_decode($message, true);
+                    $task_type  = $task_arr['type'];
+                    $task_class = "Yyg\\Tasks\\" . ucfirst($task_type) . "Task";
+                    if(class_exists($task_class)) {
+                        $task_class::execute($task_arr);
+                    }
+                }
+                else {
+                    mdebug("worker id -- %d : slow queue is empty", $task_worker->id);
                 }
             }
         );
@@ -108,8 +137,14 @@ $task_worker->onMessage = function ($connection, $data) {
 
     $not_push_queue_type = ['fetchwin','bonusStateAll', 'openBonus','bonusState'];
 
+    $slow_task = ['notice', 'email'];
+
     if(!in_array($type, $not_push_queue_type)){
-        $redis->lpush("message_queue", $data);
+        if(!in_array($type, $slow_task)) {
+            $redis->lpush("message_queue", $data);
+        } else {
+            $redis->lpush("slow_queue", $data);
+        }
     }
 
     minfo("got task: %s", $data);

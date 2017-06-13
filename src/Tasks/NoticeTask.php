@@ -172,6 +172,7 @@ class NoticeTask implements TaskInterface
         $rows = $db->query($sql);
         if (count($rows) > 0) {
             foreach ($rows as $row) {
+                $tokens = [];
                 if ($row['luck_status'] == "true") {
                     $title        = $configs['services']['android_push']['tpl']['winning_bonus']['win']['title'];
                     $message      = $configs['services']['android_push']['tpl']['winning_bonus']['win']['message'];
@@ -180,8 +181,10 @@ class NoticeTask implements TaskInterface
                     self::send_gcm_notify($token, $send_message);
                 }
                 else {
-                    if (self::verify_limit($row['reg_toekn'])) {
-                        $tokens[] = $row['reg_token'];
+                    if(isset($row['reg_token'])) {
+                        if (self::verify_limit($row['reg_token'])) {
+                            $tokens[] = $row['reg_token'];
+                        }
                     }
                 }
             }
@@ -190,7 +193,9 @@ class NoticeTask implements TaskInterface
             $message      = $configs['services']['android_push']['tpl']['winning_bonus']['fail']['message'];
             $send_message = ['title' => $title, 'message' => $message];
 
-            self::send_gcm_notify($tokens, $send_message);
+            if(count($tokens) > 0 ) {
+                self::send_gcm_notify($tokens, $send_message);
+            }
         }
 
     }

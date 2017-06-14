@@ -36,7 +36,10 @@ class InitBonusTask implements TaskInterface
         $sql = "select sum(o.money) as spend_amount , o.uid, u.type from sp_order_list o join sp_users u on u.id = o.uid  where nper_id = $nper_id and dealed = 'true' and uid not in (select luck_uid from sp_nper_list where id = $nper_id )  group by uid";
 
         $nper_info = $db->query($sql);
-        mdebug("debug nper info %s", json_encode($nper_info));
+
+        if($configs['is_debug']) {
+            mdebug("debug nper info %s", json_encode($nper_info));
+        }
 
         if (count($nper_info) > 0) {
             $goods_price = 0;

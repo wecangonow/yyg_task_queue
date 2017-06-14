@@ -75,6 +75,14 @@ $configs = [
             "key"     => "AIzaSyAZo3qXaQYEFgxsNfmi2uNp0UYOYTZxeTU",
             "gcm_url" => "https://gcm-http.googleapis.com/gcm/send",
             "tpl"     => [
+                "coupon_expired" => [
+                    'title'   => '您的代金券还有2天即将过期',
+                    'message' => '赶快登录 1RM HUNT 夺宝吧!',
+                ],
+                "confirm_address" => [
+                    'title'   => '您的奖品将与3日后失效',
+                    'message' => '请您务必于3日内提交奖品收货地址',
+                ],
                 "nocheckin"        => [
                     "title"   => "很久不见,甚是想念",
                     "message" => "我们有新的商品上架,欢迎回来看看",
@@ -82,66 +90,59 @@ $configs = [
                 "show_order"       => [
                     'title'   => '免费的 Lucky Coins 已经充值到您的账户',
                     'message' => '晒单为您赢得了免费的 Lucky Coins ! 快去夺宝吧!',
-                    'limit'   => [
-                        'status' => false,
-                        'times'  => 0,
-                    ],
                 ],
                 "show_participate" => [
                     'title'   => '您的参与有晒单了',
                     'message' => '看看谁赢了我的奖品',
-                    'limit'   => [
-                        'status' => true,
-                        'times'  => 2,
-                    ],
                 ],
                 "shipped"          => [
                     'title'   => '您的奖品已安排发货',
                     'message' => '您的奖品预计1-2周内送到您的手中',
-                    'limit'   => [
-                        'status' => false,
-                        'times'  => 0,
-                    ],
-                ],
-                "no_login_in"      => [
-                    'title'   => '您的奖品已安排发货',
-                    'message' => '您的奖品预计1-2周内送到您的手中',
-                    'limit'   => [
-                        'status' => true,
-                        'times'  => 2,
-                    ],
                 ],
                 "winning_bonus"    => [
                     'win'  => [
                         'title'   => '恭喜您中奖了',
                         'message' => '请赶快登录 1RM HUNT 填写收货地址',
-                        'limit'   => [
-                            'status' => false,
-                            'times'  => 0,
-                        ],
                     ],
                     'fail' => [
                         'title'   => '您有一笔基金未领取!',
                         'message' => '基金总量有限，先到先得，请抓紧时间.',
-                        'limit'   => [
-                            'status' => true,
-                            'times'  => 2,
-                        ],
                     ],
                 ],
             ],
         ],
         "email"        => [
-            "host"     => "email-smtp.us-east-1.amazonaws.com",
-            "port"     => 587,
-            "auth"     => true,
-            "username" => "AKIAJDAMWWQWXQQBUJKQ",
-            "password" => "AiGEbjJx7gqoyw38kQg8AKgBiylQvXgpQna2qaZlaxmK",
+            "host"     => "",
+            "port"     => ,
+            "auth"     => ,
+            "username" => "",
+            "password" => "",
             "info"     => [
                 "sender"      => "hello@1rmhunt.com",
                 "receiver"    => "hello@1rmhunt.com",
                 "sender_info" => "1RM HUNT",
                 "tpl"         => [
+                    "coupon_expired"   => [
+                        "subject" => "您有一张代金券2日后过期，请尽快使用",
+                        "body"    => <<<COUPON_EXPIRED
+                                代金券能让您极大的提升中奖几率，这样的好机会您当然不会错过。因此我们善意的提醒您，请马上打开 1RM HUNT 并使用您的代金券，别让幸运与您擦肩而过。
+                                1RM HUNT 最近新增了很多很棒的奖品，得奖的幸运儿也越来越多，马上行动您将成为下一个幸运的赢家。看看大家都赢了什么吧{{share_info}}
+                                APP 安装/打开按钮
+COUPON_EXPIRED
+,
+
+                            "is_html" => false,
+                    ],
+                    "confirm_address"   => [
+                        "subject" => "请您务必于3日内提交奖品收货地址",
+                        "body"    => <<<CONFIRM_ADDRESS
+                                您于{{luck_date}}赢得了{{good_name}},根据夺宝规则,如果您再中奖后7天内仍未提交奖品收货地址,将被视为自动放弃奖品,所以请您务必于收到本邮件3日内完成收件地址的填写,不要让幸运从您身边溜走。
+                                我们强烈推荐您关注 1RM HUNT 的 Facebook 主页（www.facebook.com/1rmhunt）以便获取最新的优惠和活动信息！
+CONFIRM_ADDRESS
+,
+
+                        "is_html" => false,
+                    ],
                     "register" => [
                         "subject" => "恭喜您已在 1RM HUNT 成功注册",
                         "body"    => "恭喜您已在 1RM HUNT 成功注册",

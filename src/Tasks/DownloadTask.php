@@ -14,52 +14,65 @@ class DownloadTask implements TaskInterface
     public static function execute(array $task)
     {
         global $redis;
-        $url       = $task['argv']['url'];
-        $base_path = $task['argv']['path'];
 
-        $response = self::getJson($url);
+        if ((isset($task['argv']['category']) && $task['argv']['category'] == "real_download") || isset($task['category'])) {
+            $download_file = self::getImg($task['argv']['download_url'], $task['argv']['save_path']);
+            minfo("Task download image to : %s", $download_file);
 
+        } else {
 
-        if ($response) {
+            $url       = $task['argv']['url'];
+            $base_path = $task['argv']['path'];
 
-            foreach ($response as $rate) {
+            $response = self::getJson($url);
 
-                $user_id     = $rate['id'];
-                $pics        = isset($rate['pics']) && is_array($rate['pics']) ? $rate['pics'] : [];
-                $append_pics = isset($rate['appendComment']['pics']) && is_array($rate['appendComment']['pics']) ? $rate['appendComment']['pics'] : [];
-                $final_pics  = array_merge($pics, $append_pics);
-                $save_dir    = $base_path . $user_id . "/";
+            if ($response) {
 
-                if (count($final_pics) > 0) {
+                foreach ($response as $rate) {
 
-                    if (!is_dir($save_dir)) {
-                        if (false === @mkdir($save_dir, 0777, true)) {
-                            throw new \RuntimeException(sprintf('Unable to create the %s directory', $save_dir));
+                    $user_id     = $rate['id'];
+                    $pics        = isset($rate['pics']) && is_array($rate['pics']) ? $rate['pics'] : [];
+                    $append_pics = isset($rate['appendComment']['pics']) && is_array($rate['appendComment']['pics']) ?
+                        $rate['appendComment']['pics'] : [];
+                    $final_pics  = array_merge($pics, $append_pics);
+                    $save_dir    = $base_path . $user_id . "/";
+
+                    if (count($final_pics) > 0) {
+
+                        if (!is_dir($save_dir)) {
+                            if (false === @mkdir($save_dir, 0777, true)) {
+                                throw new \RuntimeException(sprintf('Unable to create the %s directory', $save_dir));
+                            }
+                        }
+
+                        foreach ($final_pics as $pic) {
+
+                            $pic_url                          = "http:" . $pic;
+                            $url_task                         = [];
+                            $url_task['type']                 = "download";
+                            $url_task['argv']['category']             = 'real_download';
+                            $url_task['argv']['download_url'] = $pic_url;
+                            $url_task['argv']['save_path']    = $save_dir;
+
+                            $redis->lpush("message_queue", json_encode($url_task));
                         }
                     }
-
-                    foreach ($final_pics as $pic) {
-
-                        $pic_url       = "http:" . $pic;
-                        $download_file = self::getImg($pic_url, $save_dir);
-                        minfo("Task download image to : %s", $download_file);
-                        usleep(100000);
+                    else {
+                        minfo("Task download image : %s have no pics", $save_dir);
                     }
-                } else {
-                    minfo("Task download image : %s have no pics", $save_dir);
+
                 }
 
             }
+            else {
 
-        }
-        else {
+                $back_message = json_encode($task);
 
-            $back_message = json_encode($task);
+                //$redis->lpush("message_queue", $back_message);
+                //
+                //minfo("Task  failed send back to queue again %s ", $back_message);
 
-            $redis->lpush("message_queue", $back_message);
-
-            minfo("Task  failed send back to queue again %s ", $back_message);
-
+            }
         }
     }
 
@@ -87,8 +100,6 @@ class DownloadTask implements TaskInterface
 
         return $path . $imageName;
     }
-
-
 
     private static function getJson($base_url)
     {

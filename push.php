@@ -7,7 +7,7 @@ $arr = [
     //['type' => 'email', 'argv' => ['category' => "register", "country" => "malaysia", 'email' => "haozhongzhi@brotsoft.com"]],
     //['type' => 'email', 'argv' => ['category' => "payment", 'uid' => 1290, "order_id" => "1609270408223777" ]],
     //['type' => 'email', 'argv' => ['category' => "receipt", 'uid' => 1290, "win_record_id" => 1 ]],
-    ['type' => 'email', 'argv' => ['category' => "shipped",  "win_record_id" => 3774 ]],
+    //['type' => 'email', 'argv' => ['category' => "shipped",  "win_record_id" => 3774 ]],
     //['type' => 'email', 'argv' => ['category' => "show_order", 'show_order_ids' => "538,547"]],
     //['type' => 'notice', 'argv' => ['category' => "shipped",  "win_record_id" => 2339 ]],
     //['type' => 'notice', 'argv' => ['category' => "show_participate", 'show_order_ids' => "538,547"]],
@@ -21,6 +21,7 @@ $arr = [
     //        'save_path' => 'data/img/170603/xxxx.jpg',
     //    ]
     //],
+    ['type' => 'coupon', 'argv' => ['category' => 'init_red_coupon', 'pid' => 10,'nper_id' => 1000]],
 ];
 
 foreach ($arr as $info) {

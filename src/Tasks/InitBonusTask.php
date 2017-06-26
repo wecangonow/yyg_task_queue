@@ -19,19 +19,19 @@ class InitBonusTask implements TaskInterface
         global $db, $redis, $configs;
         $nper_id = $task['argv']['nper_id'];
 
-        $nper_bonus_total_key = str_replace(
+        $robot_key = str_replace(
             "{nid}",
             $nper_id,
-            $configs['bonus']['nper_bonus_total']
+            $configs['bonus']['nper_robot_users']
         );
 
-        if ($redis->exists($nper_bonus_total_key)) {
+
+        if ($redis->exists($robot_key)) {
             minfo("nper_id %d bonus has inited", $nper_id);
 
             return;
         }
 
-        $nper_user_pay_key = str_replace("{nid}", $nper_id, $configs['bonus']['nper_user_pay_key']);
 
         $sql = "select sum(o.money) as spend_amount , o.uid, u.type from sp_order_list o join sp_users u on u.id = o.uid  where nper_id = $nper_id and dealed = 'true' and uid not in (select luck_uid from sp_nper_list where id = $nper_id )  group by uid";
 
@@ -42,13 +42,11 @@ class InitBonusTask implements TaskInterface
         }
 
         if (count($nper_info) > 0) {
-            $goods_price = 0;
-            $spend_condition = 1 * $configs['bonus_spend_ratio'];
+
             foreach ($nper_info as $info) {
 
                 $uid                        = $info['uid'];
                 $type                       = $info['type'];
-                $spend_amount               = $info['spend_amount'];
                 $user_nper_get_bonus_record = str_replace(
                     "{uid}",
                     $uid,
@@ -58,45 +56,11 @@ class InitBonusTask implements TaskInterface
                     self::addUidToRobotSet($nper_id, $uid);
                 }
 
-                //初始化该期每个用户的购买钱数  大于1 才可以抢
-                $redis->executeRaw(['zadd', $nper_user_pay_key, $spend_amount, $uid]);
-
                 //初始化用户的该期抢红包状态为0
-                if ($spend_amount > $spend_condition) {
-                    $redis->executeRaw(['zadd', $user_nper_get_bonus_record, 0, $nper_id]);
-                }
+                $redis->executeRaw(['zadd', $user_nper_get_bonus_record, 0, $nper_id]);
 
-                $goods_price += $spend_amount;
-
-                if ($configs['is_debug']) {
-                    mdebug(
-                        "%s -- nper_id = %d user = %d spend %d ",
-                        $nper_user_pay_key,
-                        $nper_id,
-                        $uid,
-                        $spend_amount
-                    );
-                    if ($spend_amount > $spend_condition) {
-                        mdebug(
-                            "%s init user %d nper_id %d set bonus state to 0",
-                            $user_nper_get_bonus_record,
-                            $uid,
-                            $nper_id
-                        );
-                    }
-                }
             }
-
-            // 向上取整
-            $bonus_total = ceil($goods_price * $configs['bonus']['bonus_percent']);
-            $redis->executeRaw(['set', $nper_bonus_total_key, (int)$bonus_total]);
-
             self::initRobotFirstHunt($nper_id);
-
-            if ($configs['is_debug']) {
-                mdebug("%s bonus total is %d", $nper_bonus_total_key, $bonus_total);
-            }
-
         }
 
         ExecutionTime::End();

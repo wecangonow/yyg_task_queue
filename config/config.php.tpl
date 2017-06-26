@@ -27,23 +27,6 @@ $configs = [
         "goods_open_result"               => "malaysia:goods_open_result:set#{gid}",  //存储商品相关的期号 关联一个hash 结构
         "goods_open_result_related_info"  => "malaysia:goods_open_result_related:hash#{nid}",  // nid  nper_id
     ],
-"coupon"             => [
-//每期的所有机器人用户的是否参与抢红包的集合  score 0 1 分别代表未抢和已抢
-"nper_robot_users"                    => "malaysia:coupon:nper_robot_users:sorted_set#{nid}",
-//期待在多久时间内让所有机器人都抢红包单位小时
-"robot_coupon_finish_time"             => 24,
-// 保存每期每用户的购买钱数   value 为uid  score 为花费钱数,当用户多次购买该期后则score要增加
-"nper_user_pay_key"                   => "malaysia:coupon:nper_user_pay:sorted_set#{nid}",
-// 保存用户每期的返现详细记录    包括 返现时间, 金额
-"user_get_coupon_record_per_nper"      => "malaysia:coupon:user_get_coupon_record_per_nper:hash#{uid}_{nid}",
-//每期的夺宝成功用户的记录  该集合的值为  返现的用户的详细记录的hash key
-"nper_get_bonus_success_user_records" => "malaysia:coupon:nper_get_coupon_success_user_record:sorted_set#{nid}",
-//每期的夺宝失败用户的记录  该集合的值为  返现的用户的详细记录的hash key
-"nper_get_bonus_failed_user_records"  => "malaysia:coupon:nper_get_coupon_failed_user_record:sorted_set#{nid}",
-//每用户所有期的是否夺宝状态记录  score 0 1
-"user_every_nper_get_coupon_state"     => "malaysia:coupon:user_every_nper_get_coupon_state:sorted_set#{uid}",
-"user_info"                           => "malaysia:coupon:user_info:hash#{uid}",
-],
     "bonus"             => [
         //每期的所有机器人用户的是否参与抢红包的集合  score 0 1 分别代表未抢和已抢
         "nper_robot_users"                    => "malaysia:bonus:nper_robot_users:sorted_set#{nid}",

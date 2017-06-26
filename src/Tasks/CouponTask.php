@@ -21,25 +21,9 @@ class CouponTask implements TaskInterface
             case "init_red_coupon":
                 self::init_red_coupon($task);
                 break;
-            case "init_user":
-                self::init_red_coupon($task);
-                break;
         }
     }
 
-    public static function init_user($task)
-    {
-        global $redis, $configs;
-
-        $nper_id = $task['argv']['nper_id'];
-
-        $nper_coupon_user_key = str_replace(
-            "{nid}",
-            $nper_id,
-            $configs['coupon']['nper_bonus_total']
-        );
-
-    }
 
     public static function init_red_coupon($task)
     {
@@ -52,7 +36,7 @@ class CouponTask implements TaskInterface
 
         if (isset($ret['coupon_data'])) {
             $coupon_config = $ret['coupon_data'];
-            //$coupon_config = '[{"id":"1","coupon_num":"3"},{"id":"2","coupon_num":"5"}]';
+            $coupon_config = '[{"id":"1","coupon_num":"3"},{"id":"2","coupon_num":"5"}]';
             $config_arr = json_decode($coupon_config, true);
             foreach ($config_arr as $v) {
                 $coupon_id  = $v['id'];

@@ -27,16 +27,19 @@ class CouponTask implements TaskInterface
 
     public static function init_red_coupon($task)
     {
-        global $db;
+        global $db, $redis;
         $pid     = $task['argv']['pid'];
         $nper_id = $task['argv']['nper_id'];
 
         $sql = "select coupon_data from sp_goods where id = $pid";
         $ret = $db->row($sql);
 
-        if (isset($ret['coupon_data'])) {
+        $nper_if_set_coupon_key = "if_set_coupon_state#" . $nper_id;
+
+        if (isset($ret['coupon_data']) && $ret['coupon_data'] != "") {
+
             $coupon_config = $ret['coupon_data'];
-            $coupon_config = '[{"id":"1","coupon_num":"3"},{"id":"2","coupon_num":"5"}]';
+            //$coupon_config = '[{"id":"1","coupon_num":"3"},{"id":"2","coupon_num":"5"}]';
             $config_arr = json_decode($coupon_config, true);
             foreach ($config_arr as $v) {
                 $coupon_id  = $v['id'];
@@ -44,8 +47,10 @@ class CouponTask implements TaskInterface
                 $ids        = self::insert_coupon($coupon_id, $coupon_num);
                 self::cache_coupon_info_per_nper($ids, $nper_id);
             }
+            $redis->set($nper_if_set_coupon_key, 1);
         }
         else {
+            $redis->set($nper_if_set_coupon_key, 0);
             merror("goods %d not have coupon config", $pid);
         }
 
@@ -142,6 +147,21 @@ class CouponTask implements TaskInterface
                 }
 
             }
+        }
+
+    }
+
+    public static function addUidToRobotSet($nper_id, $uid)
+    {
+        global $redis, $configs;
+        $key = str_replace(
+            "{nid}",
+            $nper_id,
+            $configs['coupon']['nper_robot_users']
+        );
+        $redis->zadd($key,0,$uid);
+        if ($configs['is_debug']) {
+            mdebug("%s add uid %d to coupon robot set ", $key, $uid);
         }
 
     }

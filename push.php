@@ -21,7 +21,7 @@ $arr = [
     //        'save_path' => 'data/img/170603/xxxx.jpg',
     //    ]
     //],
-    //['type' => 'coupon', 'argv' => ['category' => 'init_red_coupon', 'pid' => 10,'nper_id' => 556]],
+    //['type' => 'coupon', 'argv' => ['category' => 'init_red_coupon', 'pid' => 11,'nper_id' => 556]],
     //['type' => 'initBonus', 'argv' => ['nper_id' => 556]],
     ['type' => 'openBonus', 'argv' => ['nper_id' => 556, 'uid' => 993]],
     ['type' => 'openBonus', 'argv' => ['nper_id' => 556, 'uid' => 4540]],
@@ -30,6 +30,7 @@ $arr = [
     ['type' => 'openBonus', 'argv' => ['nper_id' => 556, 'uid' => 3143]],
     ['type' => 'openBonus', 'argv' => ['nper_id' => 556, 'uid' => 47]],
     ['type' => 'openBonus', 'argv' => ['nper_id' => 556, 'uid' => 2052]],
+    ['type' => 'shortUrl', 'argv' => ['uid' => 2052]],
 ];
 
 foreach ($arr as $info) {

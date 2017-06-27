@@ -42,6 +42,9 @@ class InitBonusTask implements TaskInterface
         }
 
         if (count($nper_info) > 0) {
+            $nper_if_set_coupon_key = "if_set_coupon_state#" . $nper_id;
+
+            $if_set_coupon = $redis->get($nper_if_set_coupon_key);
 
             foreach ($nper_info as $info) {
 
@@ -56,11 +59,15 @@ class InitBonusTask implements TaskInterface
                     self::addUidToRobotSet($nper_id, $uid);
                 }
 
-                //初始化用户的该期抢红包状态为0
-                $redis->executeRaw(['zadd', $user_nper_get_bonus_record, 0, $nper_id]);
+                if($if_set_coupon) {
+                    //初始化用户的该期抢红包状态为0
+                    $redis->executeRaw(['zadd', $user_nper_get_bonus_record, 0, $nper_id]);
+                    self::initRobotFirstHunt($nper_id);
+                } else {
+                    $redis->executeRaw(['zadd', $user_nper_get_bonus_record, 1, $nper_id]);
+                }
 
             }
-            self::initRobotFirstHunt($nper_id);
         }
 
         ExecutionTime::End();

@@ -7,7 +7,7 @@ $arr = [
     //['type' => 'email', 'argv' => ['category' => "register", "country" => "malaysia", 'email' => "haozhongzhi@brotsoft.com"]],
     //['type' => 'email', 'argv' => ['category' => "payment", 'uid' => 1290, "order_id" => "1609270408223777" ]],
     //['type' => 'email', 'argv' => ['category' => "receipt", 'uid' => 1290, "win_record_id" => 1 ]],
-    ['type' => 'email', 'argv' => ['category' => "shipped",  "win_record_id" => 3774 ]],
+    //['type' => 'email', 'argv' => ['category' => "shipped",  "win_record_id" => 3774 ]],
     //['type' => 'email', 'argv' => ['category' => "show_order", 'show_order_ids' => "538,547"]],
     //['type' => 'notice', 'argv' => ['category' => "shipped",  "win_record_id" => 2339 ]],
     //['type' => 'notice', 'argv' => ['category' => "show_participate", 'show_order_ids' => "538,547"]],
@@ -21,6 +21,16 @@ $arr = [
     //        'save_path' => 'data/img/170603/xxxx.jpg',
     //    ]
     //],
+    //['type' => 'coupon', 'argv' => ['category' => 'init_red_coupon', 'pid' => 11,'nper_id' => 556]],
+    //['type' => 'initBonus', 'argv' => ['nper_id' => 556]],
+    ['type' => 'openBonus', 'argv' => ['nper_id' => 556, 'uid' => 993]],
+    ['type' => 'openBonus', 'argv' => ['nper_id' => 556, 'uid' => 4540]],
+    ['type' => 'openBonus', 'argv' => ['nper_id' => 556, 'uid' => 4697]],
+    ['type' => 'openBonus', 'argv' => ['nper_id' => 556, 'uid' => 34]],
+    ['type' => 'openBonus', 'argv' => ['nper_id' => 556, 'uid' => 3143]],
+    ['type' => 'openBonus', 'argv' => ['nper_id' => 556, 'uid' => 47]],
+    ['type' => 'openBonus', 'argv' => ['nper_id' => 556, 'uid' => 2052]],
+    ['type' => 'shortUrl', 'argv' => ['uid' => 2052]],
 ];
 
 foreach ($arr as $info) {

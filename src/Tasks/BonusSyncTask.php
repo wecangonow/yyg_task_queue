@@ -15,18 +15,19 @@ class BonusSyncTask implements TaskInterface
         global $db;
 
         $uid = $task['argv']['uid'];
-        $amount = $task['argv']['amount'];
-        $create_time = time();
+        $id = $task['argv']['coupon_id'];
 
-        $sql = "insert into sp_user_money (uid, money, create_time, type) values ($uid, $amount, $create_time, 6)";
+        $sql = "select expired_days from sp_coupon_type where id = (select coupon_id from sp_user_coupon where id = $id)";
 
-        $insert_result = $db->query($sql);
+        $ret = $db->row($sql);
 
-        mdebug("sync insert sql is %s : result %s ", $sql, serialize($insert_result));
+        $expired_days = $ret['expired_days'];
 
-        $update = "update sp_users set money = money + $amount where id = $uid";
+        $expired_time = time() + 3600*24*$expired_days;
 
-        $update_result = $db->query($update);
+        $sql = "update sp_user_coupon set uid = $uid, expired_time = $expired_time where id = $id";
+
+        $update_result = $db->query($sql);
 
         mdebug("sync update sql is %s : result %s", $sql, serialize($update_result));
     }

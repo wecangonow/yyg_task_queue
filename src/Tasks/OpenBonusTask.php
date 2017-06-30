@@ -20,16 +20,9 @@ class OpenBonusTask implements TaskInterface
         $nper_id = $task['argv']['nper_id'];
         $uid     = $task['argv']['uid'];
 
-        //判断该用户是否有资格抢该
-        $nper_user_pay_key = str_replace("{nid}", $nper_id, $configs['bonus']['nper_user_pay_key']);
-
-        $spend = $redis->executeRaw(['zscore', $nper_user_pay_key, $uid]);
-
         $ret = ['bonus_records' => [], 'is_win' => false, 'win_amount' => 0];
 
-        $spend_condition = 1 * $configs['bonus_spend_ratio'];
-
-        if ($spend && $spend > $spend_condition) {
+        if (true) {
 
             $user_nper_get_bonus_record = str_replace(
                 "{uid}",
@@ -44,20 +37,9 @@ class OpenBonusTask implements TaskInterface
                 //更新该用户对该期抢包得状态为1
                 $redis->executeRaw(['zadd', $user_nper_get_bonus_record, 1, $nper_id]);
 
-                $nper_bonus_total_key = str_replace(
-                    "{nid}",
-                    $nper_id,
-                    $configs['bonus']['nper_bonus_total']
-                );
+                //分配代金券id
+                $coupon_id = self::get_coupon_id($nper_id);
 
-                $remain = $redis->executeRaw(['get', $nper_bonus_total_key]);
-
-                $num_user_can_get = rand($configs['bonus']['min_bonus'], min($remain,floor($spend / 2)));
-                $num_user_can_get = min($num_user_can_get, $configs['bonus']['max_bonus']);
-
-                if ($configs['is_debug']) {
-                    mdebug("before user %d purchase  nper %d | fund remain %d ", $uid, $nper_id, $remain);
-                }
 
                 $open_time = time();
 
@@ -77,7 +59,7 @@ class OpenBonusTask implements TaskInterface
                 minfo("uid %d info is %s", $uid, json_encode($user_info));
 
 
-                if ($remain == 0) {
+                if ($coupon_id == 0) {
 
                     //该用户加入到该期抢包得失败集合中
                     $failed_set_key = str_replace(
@@ -120,14 +102,8 @@ class OpenBonusTask implements TaskInterface
 
                 }
                 else {
-                    if ($num_user_can_get >= $remain) {
-                        $decrby = $remain;
-                    }
-                    else {
-                        $decrby = $num_user_can_get;
-                    }
 
-                    $remain_after_decr = $redis->executeRaw(['decrby', $nper_bonus_total_key, $decrby]);
+                    $got = self::get_coupon_reduce_money($coupon_id);
 
                     //该用户加入到该期抢包得成功集合中
                     $success_set_key = str_replace(
@@ -153,38 +129,25 @@ class OpenBonusTask implements TaskInterface
                             'time',
                             $open_time,
                             'amount',
-                            $decrby,
+                            $got,
                             'name',
                             $user_info['name']
                         ]
                     );
 
-                    if ($configs['is_debug']) {
-                        mdebug(
-                            "user %d spend %d get %d bonus from  nper %d | still remain %d | user_info %s",
-                            $uid,
-                            $spend,
-                            $decrby,
-                            $nper_id,
-                            $remain_after_decr,
-                            json_encode($user_info)
-                        );
-                    }
 
-                    $ret['win_amount'] = $decrby;
+                    $ret['win_amount'] = $got;
                     $ret['is_win'] = true;
 
-                    if ($user_info['type'] != -1) {
 
-                        //发送异步mysql update任务
-                        $sql_task    = ['type' => 'bonusSync', 'argv' => ['uid' => $uid, 'amount' => $decrby]];
-                        $sql_message = json_encode($sql_task);
+                    //发送异步mysql update任务
+                    $sql_task    = ['type' => 'bonusSync', 'argv' => ['uid' => $uid, 'coupon_id' => $coupon_id, 'nper_id' => $nper_id]];
+                    $sql_message = json_encode($sql_task);
 
-                        $redis->lpush("message_queue", $sql_message);
+                    $redis->lpush("message_queue", $sql_message);
 
-                        if ($configs['is_debug']) {
-                            mdebug("bonus sql sync task | %s", $sql_message);
-                        }
+                    if ($configs['is_debug']) {
+                        mdebug("bonus sql sync task | %s", $sql_message);
                     }
 
                     return json_encode($ret);
@@ -199,15 +162,6 @@ class OpenBonusTask implements TaskInterface
                 $ret['info'] = $info;
                 return json_encode($ret);
             }
-        }
-        else {
-            if ($configs['is_debug']) {
-                mdebug("user %d not qualified get bonus of nper %d", $uid, $nper_id);
-            }
-
-            $info = sprintf("user %d not qualified get bonus of nper %d", $uid, $nper_id);
-            $ret['info'] = $info;
-            return json_encode($ret);
         }
 
         ExecutionTime::End();
@@ -288,4 +242,37 @@ class OpenBonusTask implements TaskInterface
         return $ret;
 
     }
+
+    public static function get_coupon_reduce_money($id)
+    {
+        global $db;
+
+        $sql = "select minus_amount from sp_user_coupon where id = $id";
+
+        $ret = $db->row($sql);
+
+        return $ret['minus_amount'];
+
+    }
+
+    //返回coupon的id
+    public static function get_coupon_id($nper_id)
+    {
+        global $redis;
+
+        $key = "red_coupon_ids#" . $nper_id;
+
+        $ids = $redis->executeRaw(['zrangebyscore', $key, 0, 0]);
+
+        $count = count($ids);
+        if($count > 0) {
+            $rand = rand(0, $count - 1);
+            $ret = $ids[$rand];
+            $redis->executeRaw(['zadd', $key, 1, $ret]);
+            return $ret;
+        } else {
+            return 0;
+        }
+    }
+
 }

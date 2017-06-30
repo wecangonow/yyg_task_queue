@@ -14,8 +14,10 @@ class ShortUrlTask  implements TaskInterface
 {
     public static function execute(array $task)
     {
+        global $db, $configs;
+
         $uid = $task['argv']['uid'];
-        $basic_url = "http://1.1rmhunt.com/trace_url.php?uid=";
+        $basic_url = $configs['short_url_basic'];
 
         $url = $basic_url . $uid;
 
@@ -23,7 +25,17 @@ class ShortUrlTask  implements TaskInterface
 
         $short_url = $google_api->shorten($url);
 
-        echo $short_url . "\n";
+
+        $sql = "update sp_users set share_url = '$short_url' where id = $uid";
+
+        $ret = $db->query($sql);
+
+        if($ret) {
+            mdebug("set users id %d share url to %s successfully | origin url is %s", $uid, $short_url, $url);
+        } else {
+            mdebug("set users id %d share url to %s failed | origin url is %s", $uid, $short_url, $url);
+        }
+
     }
 
 }

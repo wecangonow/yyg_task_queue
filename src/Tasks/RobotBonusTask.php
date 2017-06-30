@@ -36,7 +36,7 @@ class RobotBonusTask implements TaskInterface
                     $use_gap = rand(round($long_time_gap/2),$long_time_gap);
                     $time = time() + $use_gap;
                 } else {
-                    $time = time() + rand(1,5);
+                    $time = time() + rand(10,30);
                 }
                 $data = ['type' => 'robotBonus', 'argv' => ['nper_id' => $nper_id, 'time' => $time]];
                 minfo("put robot bonus task data %s", json_encode($data));

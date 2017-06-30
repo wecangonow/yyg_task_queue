@@ -8,6 +8,8 @@ $configs = [
     "timezone"          => "Asia/Shanghai",
     "bonus_spend_ratio" => 1,  // 俄罗斯 10   马拉西亚 土耳其 1
     "robot_bonus_queue" => "malaysia:bonus:robot_bonus_queue",
+    "robot_buy_url" => "",
+    "short_url_basic" => "http://www.yyg.com/trace_url.php?uid=",
     "timer_interval"    => 2,   // 执行任务定时器 时间间隔
     "prize"             => [
         "low_ratio"                       => 0.75,

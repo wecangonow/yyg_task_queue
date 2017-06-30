@@ -5,3 +5,10 @@ logs/*
 *.csv
 config/*.php
 !bootstrap.php
+server.php
+push.php
+url_arr.php
+push_email.php
+push_url.php
+email.tpl.php
+

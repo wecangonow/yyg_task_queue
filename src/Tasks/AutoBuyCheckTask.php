@@ -122,7 +122,7 @@ class AutoBuyCheckTask implements TaskInterface
                         $state
                     );
                     if ($state) {
-                        self::sync_task($task_detail);
+                        self::sync_task($task);
 
                         return;
                     }
@@ -187,15 +187,11 @@ class AutoBuyCheckTask implements TaskInterface
 
                 $task_data = json_encode($request_data);
                 $redis->lpush("message_queue", $task_data);
-                mdebug("auto_buy_queue got task %s", $task_data);
-
+                mdebug("message queue got task %s", $task_data);
             }
         }
-
         ExecutionTime::End();
-
         minfo("%s::execute spend %s ", get_called_class(), ExecutionTime::ExportTime());
-
     }
 
     public static function GetAllTasks()
@@ -203,7 +199,7 @@ class AutoBuyCheckTask implements TaskInterface
         global $db;
         $hour = date("G", time());
 
-        $sql = "select p.id,p.speed_x,p.gid,p.min_time,p.max_time,p.join_type,p.exec_time,p.run_hour, g.price, g.unit_price from sp_rt_regular p right join sp_goods g on p.gid = g.id where run_hour = $hour and enable = 1 order by rand()";
+        $sql = "select p.id,p.exec_record_times,p.speed_x,p.gid,p.min_time,p.max_time,p.join_type,p.exec_time,p.run_hour, g.price, g.unit_price from sp_rt_regular p right join sp_goods g on p.gid = g.id where run_hour = $hour and enable = 1 order by rand()";
         $ret = $db->query($sql);
 
         return $ret;
@@ -260,7 +256,7 @@ class AutoBuyCheckTask implements TaskInterface
         mdebug("gid %d , nper_id %d setting ignore to %s | ignore num is %d", $gid, $nper_id, $value, $ignore_number);
 
         $redis->set($key, $value);
-        $redis->expire($key, 3600*24*100);
+        $redis->expire($key, 3600*24*30);
 
         return $value;
     }
@@ -281,6 +277,27 @@ class AutoBuyCheckTask implements TaskInterface
             else {
                 return false;
             }
+        }
+    }
+
+    public static function sync_task($data)
+    {
+        global $db;
+        $gid = $data['gid'];
+        $time = time();
+        $random_sec = intval(rand($data['min_time'], $data['max_time']) / $data['speed_x']);
+
+        $time = $random_sec + (int)$time;
+
+
+        $up_data['exec_time']         = $time;
+        $up_data['exec_record_times'] = (int)$data['exec_record_times'] + 1;
+        $up_data['update_time']       = time();
+
+        $row_count = $db->update('sp_rt_regular')->cols($up_data)->where('gid=' . $gid)->query();
+
+        if($row_count > 0) {
+            mdebug("gid is %d  next run time add secs is %d", $gid, $random_sec);
         }
     }
 

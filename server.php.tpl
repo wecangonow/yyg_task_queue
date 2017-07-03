@@ -36,10 +36,10 @@ $task_worker->onWorkerStart = function ($task_worker) {
 
     $time_interval = $configs['timer_interval'];
 
-    $worker_ids = [0, 4, 5, 6, 7, 8];
+    $worker_ids = [0, 4, 5, 6, 7, 9];
 
     if($task_worker->id == 8) {
-        Timer::add(1, ["\\Yyg\\tasks\\AutoBuyCheckTask", "execute"], [[]]);
+        Timer::add(1, ["\\Yyg\\Tasks\\AutoBuyCheckTask", "execute"], [[]]);
     }
 
     if (in_array($task_worker->id, $worker_ids)) {

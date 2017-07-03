@@ -9,7 +9,7 @@ use Oasis\Mlib\Logging\LocalFileHandler;
 
 
 $task_worker        = new Worker('Text://0.0.0.0:6161');
-$task_worker->count = 10;
+$task_worker->count = 20;
 $task_worker->name  = 'TaskWorker';
 
 Worker::$logFile = '/tmp/workerman.log';
@@ -36,7 +36,7 @@ $task_worker->onWorkerStart = function ($task_worker) {
 
     $time_interval = $configs['timer_interval'];
 
-    $worker_ids = [0, 4, 5, 6, 7, 9];
+    $worker_ids = [0, 4, 5, 6, 7, 9, 10,11,12,13,14,15,16,17,18,19];
 
     if($task_worker->id == 8) {
         Timer::add(1, ["\\Yyg\\Tasks\\AutoBuyCheckTask", "execute"], [[]]);

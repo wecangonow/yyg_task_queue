@@ -175,7 +175,7 @@ class EmailTask implements TaskInterface
             $body                        = str_replace("{{paid}}", $order_info['price'], $body);
             $body                        = str_replace("{{uid}}", $order_info['uid'], $body);
             $real_email_content['body']  = $body;
-            $real_email_content['email'] = $email;
+            $real_email_content['email'] = $recharge_email;
 
             self::send_email($real_email_content, $task);
         }

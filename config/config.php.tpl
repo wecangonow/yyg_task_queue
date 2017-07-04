@@ -150,10 +150,22 @@ CONFIRM_ADDRESS
                         "body"    => "恭喜您已在 1RM HUNT 成功注册",
                         "is_html" => false,
                     ],
-                    "payment"  => [
-                        "subject" => "恭喜您支付成功",
-                        "body"    => "您已经在{{pay_time}}付款给1RM HUNT。这是一封系统自动回复的邮件.",
-                        "is_html" => false,
+
+                    "payment"    => [
+                        "subject" => "Congratulations on your successful payment.",
+                        "body"    => [
+                            "recharge" => "You have already paid {{paid}} MYR to  `1RM HUNT` at {{pay_time}}. This is an automatically generated message, no need to reply.",
+                            "buy" => "You have successfully paid {{paid}} MYR to  `1RM HUNT` at {{pay_time}} and got the Lucky Numbers, if you win we will immediately through the mail and App inform you, please be sure to pay close attention to the progress of the hunt."
+                        ],
+                        "is_html" => true,
+                    ],
+                    "friendPayment"    => [
+                        "subject" => "Congratulations on your successful payment.",
+                        "body"    => [
+                            "recharge" => "You have already paid {{paid}} MYR for your friend {{uid}} at {{pay_time}} . This is an automatically generated message, no need to reply.",
+                            "be_charged" => "Your friend {{uid}} have already paid {{paid}} MYR for you at {{pay_time}}. This is an automatically generated message, no need to reply."
+                        ],
+                        "is_html" => true,
                     ],
                     "receipt"  => [
                         "subject" => "别错过属于您的20个免费 Lucky Coins",

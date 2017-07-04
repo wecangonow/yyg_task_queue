@@ -21,18 +21,31 @@ class EmailTask implements TaskInterface
 
         $mail->isSMTP();
 
-        $mail->Host     = $email_config['host'];
-        $mail->Port     = $email_config['port'];
-        $mail->SMTPAuth = $email_config['auth'];
-        $mail->Username = $email_config['username'];
-        $mail->Password = $email_config['password'];
-        //$mail->SMTPDebug = 2;
+        $mail->Host      = $email_config['host'];
+        $mail->Port      = $email_config['port'];
+        $mail->SMTPAuth  = $email_config['auth'];
+        $mail->Username  = $email_config['username'];
+        $mail->Password  = $email_config['password'];
+        $mail->SMTPDebug = 2;
         $mail->setFrom($email_config['info']['sender'], $email_config['info']['sender_info']);
         $mail->addReplyTo($email_config['info']['receiver']);
         $mail->CharSet = 'UTF-8';
         $mail->IsHTML($real_email_content['is_html']);
         $mail->Subject = $real_email_content['subject'];
-        $mail->Body    = $real_email_content['body'];
+
+        if ($real_email_content['is_html']) {
+
+            $real_email_content['body'] = str_replace(
+                "{{content}}",
+                $real_email_content['body'],
+                file_get_contents("tpls/tpl.html")
+            );
+            $mail->Body                 = $real_email_content['body'];
+
+        }
+        else {
+            $mail->Body = $real_email_content['body'];
+        }
 
         // 上线后需要移除
         $email = $real_email_content['email'];
@@ -78,8 +91,14 @@ class EmailTask implements TaskInterface
                 $uid                         = $task['argv']['uid'];
                 $order_id                    = $task['argv']['order_id'];
                 $real_email_content['email'] = self::get_email_by_id($uid);
-                $pay_time                    = self::get_pay_time_by_order($order_id);
-                $real_email_content['body']  = str_replace("{{pay_time}}", $pay_time, $real_email_content['body']);
+                $ret                         = self::get_order_info_by_order_id($order_id);
+                $type                        = $ret['type'];
+                $real_email_content['body']  = str_replace(
+                    "{{pay_time}}",
+                    $ret['pay_time'],
+                    $real_email_content['body'][$type]
+                );
+                $real_email_content['body']  = str_replace("{{paid}}", $ret['price'], $real_email_content['body']);
                 break;
             case "receipt":
                 $uid                         = $task['argv']['uid'];
@@ -99,6 +118,10 @@ class EmailTask implements TaskInterface
                 self::show_order_email_and_notify($show_order_ids, $real_email_content, $task);
                 $continue = false;
                 break;
+            case "friendPayment":
+                self::friend_payment($task, $real_email_content);
+                $continue = false;
+                break;
 
         }
 
@@ -111,6 +134,52 @@ class EmailTask implements TaskInterface
             }
             self::send_email($real_email_content, $task);
         }
+    }
+
+    public static function friend_payment($task, $real_email_content)
+    {
+        //充值的用户的uid
+        $uid = $task['argv']['charge_uid'];
+        // 被充值的用户的
+        $email = $task['argv']['user_email'];
+
+        $order_id = $task['argv']['order_id'];
+
+        $order_info = self::get_order_info_by_order_id($order_id);
+
+        $origin_body = $real_email_content['body'];
+        if ($email) {
+            $body                        = $origin_body['be_charged'];
+            $body                        = str_replace(
+                "{{pay_time}}",
+                $order_info['pay_time'],
+                $body
+            );
+            $body                        = str_replace("{{paid}}", $order_info['price'], $body);
+            $body                        = str_replace("{{uid}}", $uid, $body);
+            $real_email_content['body']  = $body;
+            $real_email_content['email'] = $email;
+
+            self::send_email($real_email_content, $task);
+        }
+
+        $recharge_email = self::get_email_by_id($uid);
+
+        if ($recharge_email) {
+            $body                        = $origin_body['recharge'];
+            $body                        = str_replace(
+                "{{pay_time}}",
+                $order_info['pay_time'],
+                $body
+            );
+            $body                        = str_replace("{{paid}}", $order_info['price'], $body);
+            $body                        = str_replace("{{uid}}", $order_info['uid'], $body);
+            $real_email_content['body']  = $body;
+            $real_email_content['email'] = $email;
+
+            self::send_email($real_email_content, $task);
+        }
+
     }
 
     public static function get_email_with_win_record_id($win_record_id)
@@ -157,7 +226,7 @@ class EmailTask implements TaskInterface
                 $email = self::get_email_from_user_by_uid($v['uid']);
             }
 
-            if($email != null) {
+            if ($email != null) {
                 $real_email_content['email'] = $email;
                 self::send_email($real_email_content, $task);
             }
@@ -179,15 +248,20 @@ class EmailTask implements TaskInterface
 
     }
 
-    public static function get_pay_time_by_order($order_id)
+    public static function get_order_info_by_order_id($order_id)
     {
         global $db;
 
         $pay_info = $db->row(
-            "select pay_time from sp_order_list_parent where order_id=" . strval($order_id)
+            "select pay_time, price, bus_type, uid from sp_order_list_parent where order_id='$order_id'"
         );
 
-        return date("Y-m-d H:i:s", $pay_info['pay_time'] / 1000);
+        $ret['pay_time'] = date("Y-m-d H:i:s", $pay_info['pay_time'] / 1000);
+        $ret['price']    = $pay_info['price'];
+        $ret['type']     = $pay_info['bus_type'];
+        $ret['uid']      = $pay_info['uid'];
+
+        return $ret;
     }
 
     public static function get_email_by_id($id)

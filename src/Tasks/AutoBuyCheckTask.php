@@ -199,7 +199,11 @@ class AutoBuyCheckTask implements TaskInterface
         global $db;
         $hour = date("G", time());
 
-        $sql = "select p.id,p.exec_record_times,p.speed_x,p.gid,p.min_time,p.max_time,p.join_type,p.exec_time,p.run_hour, g.price, g.unit_price from sp_rt_regular p right join sp_goods g on p.gid = g.id where run_hour = $hour and enable = 1 order by rand()";
+        $sql = "select p.id,p.exec_record_times,p.speed_x,p.gid,p.min_time,p.max_time,p.join_type,p.exec_time,p.run_hour, g.price, g.unit_price
+                    from sp_rt_regular p
+                    right join sp_goods g on p.gid = g.id
+                    right join sp_nper_list n  on p.gid = n.pid
+                     where run_hour = $hour and enable = 1 and n.status = 1 order by rand()";
         $ret = $db->query($sql);
 
         return $ret;

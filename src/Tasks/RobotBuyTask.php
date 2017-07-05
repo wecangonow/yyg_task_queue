@@ -59,7 +59,7 @@ class RobotBuyTask implements TaskInterface
             AutoBuyCheckTask::sync_task($task_detail);
             self::write_remote_log($nper_id, $robot_info, $task_detail['buy_times']);
         } else {
-            mdebug("task execute failed %s", json_encode($request_data));
+            mdebug("task execute failed %s and return data is %s", json_encode($request_data), $body);
         }
 
         ExecutionTime::End();

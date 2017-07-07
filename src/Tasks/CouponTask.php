@@ -8,10 +8,13 @@
 
 namespace Yyg\Tasks;
 
+use Yyg\Core\ExecutionTime;
+
 class CouponTask implements TaskInterface
 {
     public static function execute(array $task)
     {
+        ExecutionTime::Start();
         $category = $task['argv']['category'];
 
         switch ($category) {
@@ -22,8 +25,10 @@ class CouponTask implements TaskInterface
                 self::init_red_coupon($task);
                 break;
         }
-    }
 
+        ExecutionTime::End();
+        minfo("%s::execute spend %s ", get_called_class(), ExecutionTime::ExportTime());
+    }
 
     public static function init_red_coupon($task)
     {
@@ -62,8 +67,8 @@ class CouponTask implements TaskInterface
 
         $key = "red_coupon_ids#" . $nper_id;
 
-        foreach($ids as $id) {
-            $redis->zadd($key,0,$id);
+        foreach ($ids as $id) {
+            $redis->zadd($key, 0, $id);
             mdebug("nper %d add coupon id %d", $nper_id, $id);
         }
     }
@@ -98,57 +103,63 @@ class CouponTask implements TaskInterface
 
     public static function register($task)
     {
-        global $db;
-        $uid       = $task['argv']['uid'];
-        $sql       = "select * from sp_coupon_type where id = 9 or id = 10";
-        $type_info = $db->query($sql);
+        global $db, $configs;
+        $uid      = $task['argv']['uid'];
+        $category = $task['argv']['category'];
 
-        if (count($type_info) > 1) {
-            $insert_id = 0;
-            foreach ($type_info as $v) {
-                $insert_id = $db->insert("sp_user_coupon")->cols(
-                    [
-                        'uid'          => $uid,
-                        'coupon_id'    => $v['id'],
-                        'title'        => $v['title'],
-                        'category'     => $task['argv']['category'],
-                        'sub_title'    => $v['sub_title'],
-                        'type'         => $v['type'],
-                        'full_amount'  => $v['full_amount'],
-                        'minus_amount' => $v['minus_amount'],
-                        'expired_time' => time() + $v['expired_days'] * 24 * 3600,
-                        'create_time'  => time(),
+        $register_coupon_config = $configs['coupon']['register'];
+        if (is_array($register_coupon_config)) {
 
-                    ]
-                )->query();
+            foreach ($register_coupon_config as $days => $coupon_ids) {
+                if (is_array($coupon_ids)) {
+                    foreach ($coupon_ids as $id => $count) {
 
-                if ($insert_id) {
-                    mdebug("new register user got coupon record id is %d", $insert_id);
-                }
+                        $sql         = "select id, title,sub_title,type,full_amount,minus_amount, expired_days from sp_coupon_type where id = $id";
+                        $type_info   = $db->row($sql);
+                        $insert_data = [
+                            'uid'          => $uid,
+                            'coupon_id'    => $type_info['id'],
+                            'title'        => $type_info['title'],
+                            'category'     => $category,
+                            'sub_title'    => $type_info['sub_title'],
+                            'type'         => $type_info['type'],
+                            'full_amount'  => $type_info['full_amount'],
+                            'minus_amount' => $type_info['minus_amount'],
+                        ];
+                        $now         = time();
+                        if ($days == 1) {
+                            $insert_data['expired_time'] = $now + $type_info['expired_days'] * 24 * 3600;
+                            $insert_data['create_time']  = $now;
+                        }
+                        else {
+                            $add_day = $days - 1;
+                            $create_time                 = strtotime("+$add_day days midnight");
+                            $insert_data['expired_time'] = $create_time + $type_info['expired_days'] * 24 * 3600;
+                            $insert_data['create_time']  = $create_time;
+                            $insert_data['del_time']     = $create_time;
+                        }
 
-            }
-
-            if ($insert_id != 0) {
-                $sql    = "select reg_token, `group` from sp_reg_token where uid = $uid";
-                $tokens = $db->query($sql);
-                if (count($tokens) > 0) {
-                    $android_tokens = [];
-                    foreach ($tokens as $v) {
-                        if ($v['group'] == "" || $v['group'] == "android") {
-                            $android_tokens[] = $v['reg_token'];
+                        for ($i = 0; $i < $count; $i++) {
+                            $insert_id = $db->insert("sp_user_coupon")->cols($insert_data)->query();
+                            if ($insert_id) {
+                                minfo(
+                                    "day %d insert coupon create_time is %s insert_id is %d",
+                                    $days,
+                                    date("Y-m-d H:i:s", $insert_data['create_time']),
+                                    $insert_id
+                                );
+                            }
                         }
                     }
-
-                    $title        = "You've received Free Lucky Coins Coupon!";
-                    $message      = "Use right now or it will expire in 24 hours.";
-                    $send_message = ['title' => $title, 'message' => $message];
-
-                    NoticeTask::send_gcm_notify($android_tokens, $send_message);
                 }
-
             }
+
+        }
+        else {
+            mdebug("register return coupon config wrong check it");
         }
 
+        return;
     }
 
     public static function addUidToRobotSet($nper_id, $uid)
@@ -159,7 +170,7 @@ class CouponTask implements TaskInterface
             $nper_id,
             $configs['coupon']['nper_robot_users']
         );
-        $redis->zadd($key,0,$uid);
+        $redis->zadd($key, 0, $uid);
         if ($configs['is_debug']) {
             mdebug("%s add uid %d to coupon robot set ", $key, $uid);
         }

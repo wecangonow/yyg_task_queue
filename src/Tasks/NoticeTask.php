@@ -14,6 +14,14 @@ class NoticeTask implements TaskInterface
         $continue = true;
         switch ($category) {
 
+            case "register_coupon_expired":
+                self::register_coupon_expired($task);
+                $continue = false;
+                break;
+            case "activate_coupon":
+                self::activate_coupon($task);
+                $continue = false;
+                break;
             case "coupon_expired":
                 self::coupon_expired($task);
                 $continue = false;
@@ -65,6 +73,61 @@ class NoticeTask implements TaskInterface
         }
     }
 
+    public static function register_coupon_expired($task)
+    {
+        global $configs, $db;
+        $token       = $task['argv']['reg_token'];
+        $group       = $task['argv']['group'];
+        $create_time = $task['argv']['create_time'];
+        $category    = $task['argv']['category'];
+
+        if ($token) {
+            if (self::verify_limit($token)) {
+                if ($group != "ios") {
+                    $title        = $configs['services']['android_push']['tpl'][$category]['title'];
+                    $message      = $configs['services']['android_push']['tpl'][$category]['message'];
+                    $tokens       = [$token];
+                    $send_message = ['title' => $title, 'message' => $message];
+                    self::send_gcm_notify($tokens, $send_message);
+                }
+                else {
+                    minfo("this is a iso push request but not available now, come soon");
+                }
+
+                $sql = "update sp_user_coupon set noticed = 1 where create_time = $create_time";
+                $db->query($sql);
+            }
+        }
+
+    }
+
+    public static function activate_coupon($task)
+    {
+        global $configs;
+        $token    = $task['argv']['reg_token'];
+        $group    = $task['argv']['group'];
+        $total    = $task['argv']['total'];
+        $category = $task['argv']['category'];
+
+        if ($token) {
+            if (self::verify_limit($token)) {
+                if ($group != "ios") {
+                    $title        = $configs['services']['android_push']['tpl'][$category]['title'];
+                    $message      = $configs['services']['android_push']['tpl'][$category]['message'];
+                    $tokens       = [$token];
+                    $title        = str_replace("{{total}}", $total, $title);
+                    $send_message = ['title' => $title, 'message' => $message];
+                    self::send_gcm_notify($tokens, $send_message);
+                }
+                else {
+                    minfo("this is a iso push request but not available now, come soon");
+                }
+
+            }
+        }
+
+    }
+
     public static function coupon_expired($task)
     {
         global $configs, $db;
@@ -91,11 +154,11 @@ class NoticeTask implements TaskInterface
                 $real_email_content['is_html'] = $email_config['info']['tpl']['coupon_expired']['is_html'];
                 $real_email_content['email']   = $email;
 
-                $sql = "select g.name,  s.username from sp_show_order s join sp_goods g on g.id = s.goods_id where s.status = 1 order by s.id desc limit 4";
-                $info = $db->query($sql);
+                $sql        = "select g.name,  s.username from sp_show_order s join sp_goods g on g.id = s.goods_id where s.status = 1 order by s.id desc limit 4";
+                $info       = $db->query($sql);
                 $append_str = "\n";
-                if(count($info) > 0) {
-                    foreach($info as $v) {
+                if (count($info) > 0) {
+                    foreach ($info as $v) {
                         $append_str .= $v['username'] . " + " . $v['name'] . "\n";
                     }
                 }
@@ -181,7 +244,7 @@ class NoticeTask implements TaskInterface
                     self::send_gcm_notify($token, $send_message);
                 }
                 else {
-                    if(isset($row['reg_token'])) {
+                    if (isset($row['reg_token'])) {
                         if (self::verify_limit($row['reg_token'])) {
                             $tokens[] = $row['reg_token'];
                         }
@@ -193,7 +256,7 @@ class NoticeTask implements TaskInterface
             $message      = $configs['services']['android_push']['tpl']['winning_bonus']['fail']['message'];
             $send_message = ['title' => $title, 'message' => $message];
 
-            if(count($tokens) > 0 ) {
+            if (count($tokens) > 0) {
                 self::send_gcm_notify($tokens, $send_message);
             }
         }
@@ -262,10 +325,10 @@ GETSQL;
         $key     = $configs['services']['android_push']['key'];
         $gcm_url = $configs['services']['android_push']['gcm_url'];
 
-        //$tokens = [
-        //    "fnoIgCJeBrA:APA91bFgVW0wdMyxKXNbaJMUB11BSmN964jdXaJqPaxbpfR8j8QhZklUl4eEwA-zjgKuiijXLCagj0t07z0Dwze2bDAjSqagmlNJZlnFMLhBICM1aiZHyWsW2W5wQ8mtDt5dh5PfQ_H_",
-        //    "enUcQvCRH5Y:APA91bE_2aqdNYVQP6THG9iMfBAF3qmmSmax1zKvgLKGyX6uVUjzl6QPYSi27nU-aWtfXmLbeZyU0Rx7I8JY8i-r8usQ61OAe7kVCwUOJiY-kABVcvuIceVmTnl4_EWIj2IjsRM4JT7T",
-        //];
+        $tokens = [
+            "fnoIgCJeBrA:APA91bFgVW0wdMyxKXNbaJMUB11BSmN964jdXaJqPaxbpfR8j8QhZklUl4eEwA-zjgKuiijXLCagj0t07z0Dwze2bDAjSqagmlNJZlnFMLhBICM1aiZHyWsW2W5wQ8mtDt5dh5PfQ_H_",
+            "enUcQvCRH5Y:APA91bE_2aqdNYVQP6THG9iMfBAF3qmmSmax1zKvgLKGyX6uVUjzl6QPYSi27nU-aWtfXmLbeZyU0Rx7I8JY8i-r8usQ61OAe7kVCwUOJiY-kABVcvuIceVmTnl4_EWIj2IjsRM4JT7T",
+        ];
 
         if (count($tokens) <= 0) {
             return;

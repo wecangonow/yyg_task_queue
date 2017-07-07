@@ -81,6 +81,14 @@ $configs = [
                     'title'   => '您的代金券还有2天即将过期',
                     'message' => '赶快登录 1RM HUNT 夺宝吧!',
                 ],
+                "register_coupon_expired" => [
+                    'title'   => 'Your coupon will expire soon.',
+                    'message' => 'Log in at 1RM HUNT!',
+                ],
+                "activate_coupon" => [
+                    'title'   => "You've received {{total}} LC Coupon!",
+                    'message' => 'Use right now or it will expire in 24 hours',
+                ],
                 "confirm_address" => [
                     'title'   => '您的奖品将与3日后失效',
                     'message' => '请您务必于3日内提交奖品收货地址',

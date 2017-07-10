@@ -58,6 +58,7 @@ $configs = [
         "aws"          => [
             "domain"     => "",
             "bucket"     => "",
+            "region"     => "",
             "access_key" => "",
             "secret_key" => "",
         ],

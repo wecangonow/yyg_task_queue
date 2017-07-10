@@ -21,11 +21,12 @@ class Upload_imageTask implements TaskInterface
         $save_path = $task['argv']['save_path'];
 
         $bucket                = $configs['services']['aws']['bucket'];
+        $region                = $configs['services']['aws']['region'];
         $credentials['key']    = $configs['services']['aws']['access_key'];
         $credentials['secret'] = $configs['services']['aws']['secret_key'];
 
         $s3 = new \Aws\S3\S3Client(
-            ['credentials' => $credentials, 'version' => 'latest', 'region' => 'ap-southeast-1']
+            ['credentials' => $credentials, 'version' => 'latest', 'region' => $region]
         );
 
         try{

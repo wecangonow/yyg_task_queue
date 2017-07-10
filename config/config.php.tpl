@@ -29,6 +29,23 @@ $configs = [
         "goods_open_result"               => "malaysia:goods_open_result:set#{gid}",  //存储商品相关的期号 关联一个hash 结构
         "goods_open_result_related_info"  => "malaysia:goods_open_result_related:hash#{nid}",  // nid  nper_id
     ],
+    "coupon"             => [
+        "register" => [
+            '1' => [13 => 2],   // key 为 第几天发放 ，value 为要发的优惠券的数据库对应的id序列，严格按照此格式配置
+            '2' => [13 => 1,14 => 1],
+            '4' => [13 => 1,15 => 1],
+            '7' => [13 => 1,14 => 1],
+            '10' =>[13 => 1,15 => 1],
+            '14' =>[14 => 1,15 => 1],
+            '21' =>[14 => 1,15 => 1],
+            '28' =>[14 => 1,15 => 1],
+            '35' =>[14 => 1,16 => 1],
+            '42' =>[14 => 1,16 => 1],
+            '49' =>[15 => 1,16 => 1],
+            '56' =>[16 => 1,17 => 1],
+            '63' =>[17 => 2],
+        ]
+    ],
     "bonus"             => [
         //每期的所有机器人用户的是否参与抢红包的集合  score 0 1 分别代表未抢和已抢
         "nper_robot_users"                    => "malaysia:bonus:nper_robot_users:sorted_set#{nid}",

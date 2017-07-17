@@ -14,6 +14,10 @@ class NoticeTask implements TaskInterface
         $continue = true;
         switch ($category) {
 
+            case "total":
+                self::total_notice($task);
+                $continue = false;
+                break;
             case "register_coupon_expired":
                 self::register_coupon_expired($task);
                 $continue = false;
@@ -71,6 +75,69 @@ class NoticeTask implements TaskInterface
         else {
             mdebug("notice not continue");
         }
+    }
+
+    public static function total_notice($task)
+    {
+        global $db, $redis;
+        $real_send    = $task['argv']['real_send'];
+
+        if($real_send) {
+            $send_message = [
+                'title'      => $task['argv']['title'],
+                'message'    => $task['argv']['content'],
+                'tickerText' => $task['argv']['ticker_text'],
+            ];
+
+            $msg_id = $task['argv']['msg_id'];
+            $tokens = $task['argv']['tokens'];
+
+            self::send_gcm_notify($tokens, $send_message, $msg_id);
+
+            $success_key = "total_notice_success_count#" . $msg_id;
+            $failed_key  = "total_notice_failed_count#" . $msg_id;
+
+            $success_num = $redis->get($success_key);
+            $failure_num = $redis->get($failed_key);
+
+            $sql = "update sp_push_gcm set success_num = $success_num, fail_num = $failure_num where id = $msg_id";
+            $db->query($sql);
+
+        } else {
+
+            $max_id = 0;
+
+            $count = 1;
+            for(;;) {
+
+                $sql_count = "select id, reg_token from sp_reg_token where `group` = 'android' or `group` is null limit $max_id, 1000";
+
+                $rows = $db->query($sql_count);
+
+                $tokens = [];
+                if(count($rows) > 0) {
+                    foreach($rows as $v) {
+                        if($v['id'] > $max_id) {
+                            $max_id = $v['id'];
+                        }
+                        $tokens[] = $v['reg_token'];
+                    }
+
+                    $task['argv']['real_send'] = true;
+                    $task['argv']['tokens'] = $tokens;
+
+                    $redis->lpush("message_queue", json_encode($task));
+                    unset($task['argv']['tokens']);
+                    mdebug("total_notice task for msg_id %d | %d round put %d tokens to slow queue | task_detail is %s", $task['argv']['msg_id'], $count, count($tokens), json_encode($task));
+                    $count++;
+
+                } else {
+                    break;
+                }
+            }
+
+        }
+
     }
 
     public static function register_coupon_expired($task)
@@ -317,7 +384,7 @@ GETSQL;
         return $ret;
     }
 
-    public static function send_gcm_notify($tokens, $message)
+    public static function send_gcm_notify($tokens, $message, $msg_id = 0)
     {
 
         global $configs;
@@ -325,23 +392,25 @@ GETSQL;
         $key     = $configs['services']['android_push']['key'];
         $gcm_url = $configs['services']['android_push']['gcm_url'];
 
-        //$tokens = [
-        //    "fnoIgCJeBrA:APA91bFgVW0wdMyxKXNbaJMUB11BSmN964jdXaJqPaxbpfR8j8QhZklUl4eEwA-zjgKuiijXLCagj0t07z0Dwze2bDAjSqagmlNJZlnFMLhBICM1aiZHyWsW2W5wQ8mtDt5dh5PfQ_H_",
-        //    "enUcQvCRH5Y:APA91bE_2aqdNYVQP6THG9iMfBAF3qmmSmax1zKvgLKGyX6uVUjzl6QPYSi27nU-aWtfXmLbeZyU0Rx7I8JY8i-r8usQ61OAe7kVCwUOJiY-kABVcvuIceVmTnl4_EWIj2IjsRM4JT7T",
-        //];
+        $tokens = [
+            "fnoIgCJeBrA:APA91bFgVW0wdMyxKXNbaJMUB11BSmN964jdXaJqPaxbpfR8j8QhZklUl4eEwA-zjgKuiijXLCagj0t07z0Dwze2bDAjSqagmlNJZlnFMLhBICM1aiZHyWsW2W5wQ8mtDt5dh5PfQ_H_",
+            "enUcQvCRH5Y:APA91bE_2aqdNYVQP6THG9iMfBAF3qmmSmax1zKvgLKGyX6uVUjzl6QPYSi27nU-aWtfXmLbeZyU0Rx7I8JY8i-r8usQ61OAe7kVCwUOJiY-kABVcvuIceVmTnl4_EWIj2IjsRM4JT7T",
+        ];
 
         if (count($tokens) <= 0) {
             return;
         }
 
-        self::cache_notice_times_per_day($tokens);
+        if (!$msg_id) {
+            self::cache_notice_times_per_day($tokens);
+        }
 
         $post_data = [
             'registration_ids' => $tokens,
             'data'             => $message,
         ];
 
-        mdebug("notice content %s ", json_encode($post_data));
+        //mdebug("notice content %s ", json_encode($post_data));
 
         $client = new \GuzzleHttp\Client(
             [
@@ -353,7 +422,27 @@ GETSQL;
 
         $response = $client->post($gcm_url, ['json' => $post_data]);
 
-        mdebug("type %s response %s ", "gcm_push", $response->getBody()->getContents());
+        $response_contents = $response->getBody()->getContents();
+
+
+        if($msg_id) {
+            $success_key = "total_notice_success_count#" . $msg_id;
+            $failed_key  = "total_notice_failed_count#" . $msg_id;
+
+            $res_arr = json_decode($response_contents, true);
+
+            $success_num = $res_arr['success'];
+            $failure_num = $res_arr['failure'];
+
+            global $redis;
+
+            $redis->incrby($success_key, $success_num);
+            $redis->incrby($failed_key, $failure_num);
+
+            //mdebug("type %s response %s ", "gcm_push", $response_contents);
+
+
+        }
 
     }
 

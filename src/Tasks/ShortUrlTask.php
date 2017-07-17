@@ -21,19 +21,19 @@ class ShortUrlTask  implements TaskInterface
 
         $url = $basic_url . $uid;
 
-        $google_api = new GoogleUrlApi();
+        //$google_api = new GoogleUrlApi();
 
-        $short_url = $google_api->shorten($url);
+        //$short_url = $google_api->shorten($url);
 
 
-        $sql = "update sp_users set share_url = '$short_url' where id = $uid";
+        $sql = "update sp_users set share_url = '$url' where id = $uid";
 
         $ret = $db->query($sql);
 
         if($ret) {
-            mdebug("set users id %d share url to %s successfully | origin url is %s", $uid, $short_url, $url);
+            mdebug("set users id %d share url to %s successfully | origin url is %s", $uid, $url, $url);
         } else {
-            mdebug("set users id %d share url to %s failed | origin url is %s", $uid, $short_url, $url);
+            mdebug("set users id %d share url to %s failed | origin url is %s", $uid, $url, $url);
         }
 
     }

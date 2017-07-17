@@ -336,7 +336,7 @@ class NoticeTask implements TaskInterface
         $prefix    = "notice_count:" . date("Ymd", time()) . "#";
         $key       = $prefix . substr($token, 0, 8);
         $have_send = $redis->get($key);
-        if ($have_send >= 1) {
+        if ($have_send > 2) {
             return false;
         }
         else {

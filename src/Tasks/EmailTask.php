@@ -185,13 +185,13 @@ class EmailTask implements TaskInterface
     public static function get_email_with_win_record_id($win_record_id)
     {
         global $db;
-        $sql  = "select email, uid from sp_bind_email where uid = (select luck_uid  from sp_win_record where id = $win_record_id)";
+        $sql  = "select b.email, w.luck_uid from sp_bind_email b right join sp_win_record w on b.uid = w.luck_uid where w.id =  $win_record_id";
         $info = $db->row($sql);
         if (isset($info['email'])) {
             return $info['email'];
         }
         else {
-            return self::get_email_from_user_by_uid($info['uid']);
+            return self::get_email_from_user_by_uid($info['luck_uid']);
         }
     }
 

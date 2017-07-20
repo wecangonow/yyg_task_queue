@@ -110,7 +110,7 @@ class NoticeTask implements TaskInterface
             $count = 1;
             for(;;) {
 
-                $sql_count = "select id, reg_token from sp_reg_token where `group` = 'android' or `group` is null limit $max_id, 1000";
+                $sql_count = "select id, reg_token from sp_reg_token where (`group` = 'android' or `group` is null) and id > $max_id limit  1000";
 
                 $rows = $db->query($sql_count);
 
@@ -128,7 +128,7 @@ class NoticeTask implements TaskInterface
 
                     $redis->lpush("message_queue", json_encode($task));
                     unset($task['argv']['tokens']);
-                    mdebug("total_notice task for msg_id %d | %d round put %d tokens to slow queue | task_detail is %s", $task['argv']['msg_id'], $count, count($tokens), json_encode($task));
+                    mdebug("total_noticetask for msg_id %d | %d round put %d tokens to slow queue max_id is %d | task_detail is %s", $task['argv']['msg_id'], $count, count($tokens), $max_id, json_encode($task));
                     $count++;
 
                 } else {

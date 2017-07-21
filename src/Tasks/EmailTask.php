@@ -127,7 +127,7 @@ class EmailTask implements TaskInterface
 
         if ($continue) {
 
-            if (is_null($real_email_content['email'])) {
+            if (!$real_email_content['email']) {
                 mdebug("can not find user's email address : request data is %s", json_encode($task));
 
                 return;

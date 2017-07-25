@@ -107,8 +107,9 @@ class Response
 
         if ($configs['is_debug']) {
             mdebug("nper_id = %d before users %s after users %s", $nper_id, json_encode($users), json_encode($total_candidates));
-            mdebug("nper_id = %d, winner_id = %d, score = %s, price = %s", $nper_id, $winner_id, $score, $price);
         }
+
+        minfo("fetch_win info nper_id = %d, winner_id = %d, score = %s, price = %s", $nper_id, $winner_id, $score, $price);
 
         return json_encode(['winner_id' => $winner_id, 'nper_id' => $nper_id, 'price' => $price]);
     }

@@ -179,11 +179,11 @@ class PrizeTask implements TaskInterface
 
     public static function cold_down_count_decrease($uid)
     {
-        global $redis;
+        global $redis, $configs;
 
         $key = "cold_down_count:key#" . $uid;
 
-        $redis->decrby($key,1);
+        $redis->decrby($key, 1);
 
         if ($configs['is_debug']) {
             mdebug("redis:decrby %s %d", $key, 1);
@@ -198,8 +198,9 @@ class PrizeTask implements TaskInterface
 
         $exists = $redis->executeRaw(['exists', $key]);
 
-        if(!$exists) {
+        if (!$exists) {
             minfo("%s still not got any prize yet", $uid);
+
             return false;
         }
 
@@ -209,7 +210,7 @@ class PrizeTask implements TaskInterface
             mdebug("redis:get %s value is %d", $key, $count);
         }
 
-        if (int($count) == 0) {
+        if ((int)$count == 0) {
             return false;
         }
         else {

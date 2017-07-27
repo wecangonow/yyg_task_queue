@@ -101,34 +101,42 @@ class PrizeTask implements TaskInterface
                 }
                 else {
 
-                    $user_roi_expression = $configs['prize']['user_roi_expression'];
-
-                    $eval_str = str_replace('user_roi', self::$user_roi, $user_roi_expression);
-
-                    $roi_check = eval($eval_str);
-
-                    if ($roi_check) {
-                        self::$max_prize = self::$user_pay_life * $configs['prize']['kill_ratio'];
-                        self::$ratio     = "kill_ratio";
-
+                    if (self::check_cold_down_count($uid)) {
+                        self::$ratio     = "cold_down_ratio";
+                        self::$max_prize = 0;
+                        self::cold_down_count_decrease($uid);
                     }
                     else {
 
-                        if (self::$user_pay_life > $configs['prize']['period_money_top']) {
-                            self::$max_prize = max(
-                                self::$user_pay_period * $configs['prize']['high_ratio'],
-                                self::$user_pay_life * $configs['prize']['kill_ratio']
-                            );
-                            self::$ratio     = "high_ratio";
+                        $user_roi_expression = $configs['prize']['user_roi_expression'];
+
+                        $eval_str = str_replace('user_roi', self::$user_roi, $user_roi_expression);
+
+                        $roi_check = eval($eval_str);
+
+                        if ($roi_check) {
+                            self::$max_prize = self::$user_pay_life * $configs['prize']['kill_ratio'];
+                            self::$ratio     = "kill_ratio";
+
                         }
                         else {
-                            self::$max_prize = max(
-                                self::$user_pay_period * $configs['prize']['low_ratio'],
-                                self::$user_pay_life * $configs['prize']['kill_ratio']
-                            );
-                            self::$ratio     = "low_ratio";
-                        }
 
+                            if (self::$user_pay_life > $configs['prize']['period_money_top']) {
+                                self::$max_prize = max(
+                                    self::$user_pay_period * $configs['prize']['high_ratio'],
+                                    self::$user_pay_life * $configs['prize']['kill_ratio']
+                                );
+                                self::$ratio     = "high_ratio";
+                            }
+                            else {
+                                self::$max_prize = max(
+                                    self::$user_pay_period * $configs['prize']['low_ratio'],
+                                    self::$user_pay_life * $configs['prize']['kill_ratio']
+                                );
+                                self::$ratio     = "low_ratio";
+                            }
+
+                        }
                     }
                 }
 
@@ -167,6 +175,46 @@ class PrizeTask implements TaskInterface
 
         minfo("%s::execute spend %s ", get_called_class(), ExecutionTime::ExportTime());
 
+    }
+
+    public static function cold_down_count_decrease($uid)
+    {
+        global $redis;
+
+        $key = "cold_down_count:key#" . $uid;
+
+        $redis->decrby($key,1);
+
+        if ($configs['is_debug']) {
+            mdebug("redis:decrby %s %d", $key, 1);
+        }
+    }
+
+    public static function check_cold_down_count($uid)
+    {
+        global $configs, $redis;
+
+        $key = "cold_down_count:key#" . $uid;
+
+        $exists = $redis->executeRaw(['exists', $key]);
+
+        if(!$exists) {
+            minfo("%s still not got any prize yet", $uid);
+            return false;
+        }
+
+        $count = $redis->get($key);
+
+        if ($configs['is_debug']) {
+            mdebug("redis:get %s value is %d", $key, $count);
+        }
+
+        if (int($count) == 0) {
+            return false;
+        }
+        else {
+            return true;
+        }
     }
 
     public static function setNperPrize($nper_id, $score, $member)

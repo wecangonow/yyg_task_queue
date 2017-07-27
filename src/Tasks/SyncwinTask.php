@@ -43,9 +43,11 @@ class SyncwinTask implements TaskInterface
                     minfo("uid %s win nper %d added %d to user_win_life", $ret['luck_uid'], $nper_id, $ret['price']);
                 }
 
+                $redis->set("cold_down_count:key#" . $ret['luck_uid'], 5);
+                minfo("user %d cold_down count set to 5", $ret['luck_uid']);
+
                 // 真人中奖用户注册一个4天不填地址发邮件和app通知任务
                 $run_time = time() + 3600 * 24 * 4;
-                $run_time = time() + 5;
                 $check_confirm_address = ['type' => 'notice', 'argv' => ['category' => 'confirm_address', 'run_time' => $run_time, 'nper_id' => $nper_id, 'luck_uid' => $ret['luck_uid']]];
                 $task_data = json_encode($check_confirm_address);
                 $redis->lpush("slow_queue", $task_data);

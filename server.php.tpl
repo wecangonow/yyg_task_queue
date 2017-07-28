@@ -143,6 +143,23 @@ $task_worker->onMessage = function ($connection, $data) {
 
     (new LocalFileHandler($configs['log_path']))->install();
 
+    $info_hash_key = "message_hash:sets";
+    $data_hash = md5($data);
+
+    if($redis->sismember($info_hash_key, $data_hash)) {
+        minfo("message %s repeat", $data);
+        $connection->send("message repeat");
+        return;
+
+    } else {
+        if(!$redis->exists($info_hash_key)) {
+            $redis->sadd($info_hash_key, $data_hash);
+            $redis->expire($info_hash_key, 3600);
+        } else {
+            $redis->sadd($info_hash_key, $data_hash);
+        }
+    }
+
     $type = json_decode($data, true)['type'];
 
     $not_push_queue_type = ['fetchwin', 'bonusStateAll', 'openBonus', 'bonusState'];

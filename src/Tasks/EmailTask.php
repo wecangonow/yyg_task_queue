@@ -21,11 +21,11 @@ class EmailTask implements TaskInterface
 
         $mail->isSMTP();
 
-        $mail->Host      = $email_config['host'];
-        $mail->Port      = $email_config['port'];
-        $mail->SMTPAuth  = $email_config['auth'];
-        $mail->Username  = $email_config['username'];
-        $mail->Password  = $email_config['password'];
+        $mail->Host     = $email_config['host'];
+        $mail->Port     = $email_config['port'];
+        $mail->SMTPAuth = $email_config['auth'];
+        $mail->Username = $email_config['username'];
+        $mail->Password = $email_config['password'];
         //$mail->SMTPDebug = 2;
         $mail->setFrom($email_config['info']['sender'], $email_config['info']['sender_info']);
         $mail->addReplyTo($email_config['info']['receiver']);
@@ -49,7 +49,7 @@ class EmailTask implements TaskInterface
 
         // 上线后需要移除
         $email = $real_email_content['email'];
-        //$email = "haozhongzhi@brotsoft.com";
+        //$email = "wecangonow@sina.com";
 
         $mail->addBCC($email);
 
@@ -76,6 +76,12 @@ class EmailTask implements TaskInterface
 
         $category = $task['argv']['category'];
 
+        if (!isset($email_config['info']['tpl'][$category])) {
+            minfo("There are %s email in config", $category);
+
+            return;
+        }
+
         $real_email_content            = [];
         $real_email_content['subject'] = $email_config['info']['tpl'][$category]['subject'];
         //$real_email_content['body']    = preg_replace('/\s+/u', ' ', $email_config['info']['tpl'][$category]['body']);
@@ -84,6 +90,15 @@ class EmailTask implements TaskInterface
 
         $continue = true;
         switch ($category) {
+            case "winning":
+                $winning_info = self::winning_info($task['argv']['nper_id']);
+                $real_email_content['email'] = self::get_email_by_id($task['argv']['luck_uid']);
+                $real_email_content['body']  = str_replace(
+                    "{{goods_name}}",
+                    $winning_info['name'],
+                    $real_email_content['body']
+                );
+                break;
             case "register":
                 $real_email_content['email'] = $task['argv']['email'];
                 break;
@@ -134,6 +149,16 @@ class EmailTask implements TaskInterface
             }
             self::send_email($real_email_content, $task);
         }
+    }
+
+    public static function winning_info($nper_id)
+    {
+        global $db;
+
+        $sql = "select g.name from sp_goods g join sp_nper_list n on n.pid = g.id where n.id = $nper_id";
+
+        return $db->row($sql);
+
     }
 
     public static function friend_payment($task, $real_email_content)

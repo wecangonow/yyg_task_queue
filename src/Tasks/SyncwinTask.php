@@ -51,6 +51,10 @@ class SyncwinTask implements TaskInterface
                 $check_confirm_address = ['type' => 'notice', 'argv' => ['category' => 'confirm_address', 'run_time' => $run_time, 'nper_id' => $nper_id, 'luck_uid' => $ret['luck_uid']]];
                 $task_data = json_encode($check_confirm_address);
                 $redis->lpush("slow_queue", $task_data);
+
+                //临时根据模板是否配置相应类型的邮件key来决定是否发该封邮件
+                $winning_email = ['type' => 'email', 'argv' => ['category' => 'winning', 'nper_id' => $nper_id, 'luck_uid' => $ret['luck_uid']]];
+                $redis->lpush("slow_queue", json_encode($winning_email));
                 minfo("got task: %s", $task_data);
 
 

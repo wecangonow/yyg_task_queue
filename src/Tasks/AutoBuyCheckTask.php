@@ -212,26 +212,12 @@ class AutoBuyCheckTask implements TaskInterface
 
     public static function GetRandomRobot()
     {
-        global $redis, $db;
+        global $db;
 
-        $robot_sql = "select id, nick_name from sp_users where type = -1 and status = 1";
+        $robot_sql = "select id, nick_name from sp_users where type = -1 and status = 1 order by rand() limit 1";
 
-        $cache_time       = 3600 * 24;
-        $robots_cache_key = "buying_robot_list";
+        return $db->row($robot_sql);
 
-        $ret = $redis->get($robots_cache_key);
-
-        if (!$ret) {
-            $list = $db->query($robot_sql);
-
-            $redis->set($robots_cache_key, serialize($list));
-            $redis->expire($robots_cache_key, $cache_time);
-        }
-        else {
-            $list = unserialize($ret);
-        }
-
-        return $list[array_rand($list)];
     }
 
     public static function setTaskCurrentNperIdAndIgnorePercent($gid, $nper_id)
